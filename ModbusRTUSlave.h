@@ -4,27 +4,15 @@
 #include "Arduino.h"
 #include <SoftwareSerial.h>
 
-#define SERIAL_8N1 0x06
-#define SERIAL_8N2 0x0E
-#define SERIAL_8E1 0x26
-#define SERIAL_8E2 0x2E
-#define SERIAL_8O1 0x36
-#define SERIAL_8O2 0x3E
-
 class ModbusRTUSlave {
   public:
     ModbusRTUSlave(
       Stream& serial,
-      uint8_t buf[],
-      uint8_t bufLen,
-      bool coils[],
-      uint8_t numCoils,
-      bool inputs[],
-      uint8_t numInputs,
-      bool hRegs[],
-      uint8_t numHRegs,
-      bool inRegs[],
-      uint8_t numInRegs,
+      uint8_t *buf, size_t bufLen,
+      bool *coils, size_t numCoils,
+      bool *inputs, size_t numInputs,
+      uint16_t *hRegs, size_t numHRegs,
+      uint16_t *inRegs, size_t numInRegs,
       uint8_t dePin = 255
       );
     void begin(uint8_t id, uint32_t baud, uint8_t config = 0x06);
@@ -32,15 +20,15 @@ class ModbusRTUSlave {
   private:
     Stream *_serial;
     uint8_t *_buf;
-    uint8_t _bufLen;
+    size_t _bufLen;
     bool *_coils;
-    uint8_t _numCoils;
+    size_t _numCoils;
     bool *_inputs;
-    uint8_t _numInputs;
+    size_t _numInputs;
     uint16_t *_hRegs;
-    uint8_t _numHRegs;
+    size_t _numHRegs;
     uint16_t *_inRegs;
-    uint8_t _numInRegs;
+    size_t _numInRegs;
     int16_t _dePin;
     uint8_t _id;
     uint32_t _charTimeout;

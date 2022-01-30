@@ -1,44 +1,40 @@
 #include "ModbusRTUSlave.h"
 
-ModbusRTUSlave::ModbusRTUSlaveModbusRTUSlave(
-      Stream& serial,
-      uint8_t buf[],
-      uint8_t bufLen,
-      bool coils[],
-      uint8_t numCoils,
-      bool inputs[],
-      uint8_t numInputs,
-      bool hRegs[],
-      uint8_t numHRegs,
-      bool inRegs[],
-      uint8_t numInRegs,
-      uint8_t dePin = 255
-      ) {
+ModbusRTUSlave::ModbusRTUSlave(
+  Stream& serial,
+  uint8_t *buf, size_t bufLen,
+  bool *coils, size_t numCoils,
+  bool *inputs, size_t numInputs,
+  uint16_t *hRegs, size_t numHRegs,
+  uint16_t *inRegs, size_t numInRegs,
+  uint8_t dePin = 255
+  ) {
   _serial = &serial;
   _buf = buf;
-  _bufLen = bufLen
+  _bufLen = bufLen;
   _coils = coils;
   _numCoils = numCoils;
   _inputs = inputs;
   _numInputs = numInputs;
   _hRegs = hRegs;
   _numHRegs = numHRegs;
+  _inRegs = inRegs;
   _numInRegs = numInRegs;
   _dePin = dePin;
 }
 
-void ModbusRTUSlave::begin(Stream& serial, uint32_t baud, uint8_t config) {
-  _serial = &serial;
+void ModbusRTUSlave::begin(uint8_t id, uint32_t baud, uint8_t config) {
+  _id = id;
   uint32_t startTime = micros();
   if (baud > 19200) {
     _charTimeout = 750;
     _frameTimeout = 1750;
   }
-  else if (config == SERIAL_8E2 or config == SERIAL_8O2) {
+  else if (config == 0x2E or config == 0x3E) {
     _charTimeout = 18000000/baud;
     _frameTimeout = 42000000/baud;
   }
-  else if (config == SERIAL_8N2 or config == SERIAL_8E1 or config == SERIAL_8O1) {
+  else if (config == 0x0E or config == 0x26 or config == 0x36) {
     _charTimeout = 16500000/baud;
     _frameTimeout = 38500000/baud;
   }
@@ -46,7 +42,7 @@ void ModbusRTUSlave::begin(Stream& serial, uint32_t baud, uint8_t config) {
     _charTimeout = 15000000/baud;
     _frameTimeout = 35000000/baud;
   }
-  if (_dePin >= 0) {
+  if (_dePin != 255) {
     digitalWrite(_dePin, LOW);
     pinMode(_dePin, OUTPUT);
   }
@@ -240,9 +236,9 @@ void ModbusRTUSlave::_write(uint8_t len) {
   uint16_t crc = _crc(len);
   _buf[len] = lowByte(crc);
   _buf[len + 1] = highByte(crc);
-  if (_dePin >= 0) digitalWrite(_dePin, HIGH);
+  if (_dePin != 255) digitalWrite(_dePin, HIGH);
   _serial->write(_buf, len + 2);
-  if (_dePin >= 0) digitalWrite(_dePin, LOW);
+  if (_dePin != 255) digitalWrite(_dePin, LOW);
 }
 
 uint16_t ModbusRTUSlave::_crc(uint8_t len) {

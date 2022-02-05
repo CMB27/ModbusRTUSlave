@@ -10,12 +10,6 @@ ModbusRTUSlave modbus(Serial1);
 
 boolean coils[numCoils], discreteInputs[numDiscreteInputs];
 word holdingRegisters[numHoldingRegisters], inputRegisters[numInputRegisters];
-boolean coilRead(word address) {return coils[address];}
-void coilWrite(word address, boolean value) {coils[address] = value;}
-boolean discreteInputRead(word address) {return discreteInputs[address];}
-word holdingRegisterRead(word address) {return holdingRegisters[address];}
-void holdingRegisterWrite(word address, word value) {holdingRegisters[address] = value;}
-word inputRegisterRead(word address) {return inputRegisters[address];}
 
 word holdingRegisterOld;
 
@@ -34,7 +28,6 @@ void setup() {
   modbus.configureInputRegisters(numInputRegisters, inputRegisterRead);
   Serial1.begin(baud);
   modbus.begin(id, baud);
-
 }
 
 void loop() {
@@ -48,5 +41,30 @@ void loop() {
     holdingRegisterOld = holdingRegisters[0];
     Serial.println(holdingRegisters[0]);
   }
-  
+}
+
+char coilRead(word address) {
+  return coils[address];
+}
+
+boolean coilWrite(word address, boolean value) {
+  coils[address] = value;
+  return true;
+}
+
+char discreteInputRead(word address) {
+  return discreteInputs[address];
+}
+
+long holdingRegisterRead(word address) {
+  return holdingRegisters[address];
+}
+
+boolean holdingRegisterWrite(word address, word value) {
+  holdingRegisters[address] = value;
+  return true;
+}
+
+long inputRegisterRead(word address) {
+  return inputRegisters[address];
 }

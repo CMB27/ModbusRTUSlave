@@ -9,16 +9,16 @@
 
 class ModbusRTUSlave {
   public:
-    typedef bool (*boolRead)(uint16_t);
-    typedef void (*boolWrite)(uint16_t, bool);
-    typedef uint16_t (*wordRead)(uint16_t);
-    typedef void (*wordWrite)(uint16_t, uint16_t);
+    typedef int8_t (*BoolRead)(uint16_t);
+    typedef bool (*BoolWrite)(uint16_t, bool);
+    typedef int32_t (*WordRead)(uint16_t);
+    typedef bool (*WordWrite)(uint16_t, uint16_t);
     
     ModbusRTUSlave(Stream& serial, uint8_t dePin = 255);
-    void configureCoils(uint16_t numCoils, boolRead coilRead, boolWrite coilWrite);
-    void configureDiscreteInputs(uint16_t numDiscreteInputs, boolRead discreteInputRead);
-    void configureHoldingRegisters(uint16_t numHoldingRegisters, wordRead holdingRegisterRead, wordWrite holdingRegisterWrite);
-    void configureInputRegisters(uint16_t numInputRegisters, wordRead inputRegisterRead);
+    void configureCoils(uint16_t numCoils, BoolRead coilRead, BoolWrite coilWrite);
+    void configureDiscreteInputs(uint16_t numDiscreteInputs, BoolRead discreteInputRead);
+    void configureHoldingRegisters(uint16_t numHoldingRegisters, WordRead holdingRegisterRead, WordWrite holdingRegisterWrite);
+    void configureInputRegisters(uint16_t numInputRegisters, WordRead inputRegisterRead);
     void begin(uint8_t id, uint32_t baud, uint8_t config = 0x06);
     void poll();
   private:
@@ -31,16 +31,19 @@ class ModbusRTUSlave {
     uint16_t _numHoldingRegisters = 0;
     uint16_t _numInputRegisters = 0;
     
-    boolRead _coilRead;
-    boolRead _discreteInputRead;
-    wordRead _holdingRegisterRead;
-    wordRead _inputRegisterRead;
-    boolWrite _coilWrite;
-    wordWrite _holdingRegisterWrite;
+    BoolRead _coilRead;
+    BoolRead _discreteInputRead;
+    WordRead _holdingRegisterRead;
+    WordRead _inputRegisterRead;
+    BoolWrite _coilWrite;
+    WordWrite _holdingRegisterWrite;
     
     uint8_t _id;
     uint32_t _charTimeout;
     uint32_t _frameTimeout;
+
+    void _processBoolRead(uint16_t numBools, BoolRead boolRead);
+    void _processWordRead(uint16_t numWords, WordRead wordRead);
     
     void _exceptionResponse(uint8_t code);
     void _write(uint8_t len);

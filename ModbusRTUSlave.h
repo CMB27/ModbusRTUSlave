@@ -3,32 +3,41 @@
 
 #include "Arduino.h"
 
+#ifndef _MB_RTU_BUF_SIZE
+#define _MB_RTU_BUF_SIZE 256
+#endif
+
 class ModbusRTUSlave {
   public:
-    ModbusRTUSlave(
-      Stream& serial,
-      uint8_t *buf, size_t bufLen,
-      bool *coils, size_t numCoils,
-      bool *inputs, size_t numInputs,
-      uint16_t *hRegs, size_t numHRegs,
-      uint16_t *inRegs, size_t numInRegs,
-      uint8_t dePin = 255
-      );
+    typedef bool (*boolRead)(uint16_t);
+    typedef void (*boolWrite)(uint16_t, bool);
+    typedef uint16_t (*wordRead)(uint16_t);
+    typedef void (*wordWrite)(uint16_t, uint16_t);
+    
+    ModbusRTUSlave(Stream& serial, uint8_t dePin = 255);
+    void configureCoils(uint16_t numCoils, boolRead coilRead, boolWrite coilWrite);
+    void configureDiscreteInputs(uint16_t numDiscreteInputs, boolRead discreteInputRead);
+    void configureHoldingRegisters(uint16_t numHoldingRegisters, wordRead holdingRegisterRead, wordWrite holdingRegisterWrite);
+    void configureInputRegisters(uint16_t numInputRegisters, wordRead inputRegisterRead);
     void begin(uint8_t id, uint32_t baud, uint8_t config = 0x06);
     void poll();
   private:
+    uint8_t _buf[_MB_RTU_BUF_SIZE];
     Stream *_serial;
-    uint8_t *_buf;
-    size_t _bufLen;
-    bool *_coils;
-    size_t _numCoils;
-    bool *_inputs;
-    size_t _numInputs;
-    uint16_t *_hRegs;
-    size_t _numHRegs;
-    uint16_t *_inRegs;
-    size_t _numInRegs;
-    int16_t _dePin;
+    uint8_t _dePin;
+    
+    uint16_t _numCoils = 0;
+    uint16_t _numDiscreteInputs = 0;
+    uint16_t _numHoldingRegisters = 0;
+    uint16_t _numInputRegisters = 0;
+    
+    boolRead _coilRead;
+    boolRead _discreteInputRead;
+    wordRead _holdingRegisterRead;
+    wordRead _inputRegisterRead;
+    boolWrite _coilWrite;
+    wordWrite _holdingRegisterWrite;
+    
     uint8_t _id;
     uint32_t _charTimeout;
     uint32_t _frameTimeout;

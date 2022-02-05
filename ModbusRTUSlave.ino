@@ -2,40 +2,51 @@
 
 const byte buttonPin = 12, ledPin = 13, potPin = A0;
 
-const size_t bufLen = 256, numCoils = 8, numInputs = 8, numHRegs = 4, numInRegs = 4;
+const word numCoils = 8, numDiscreteInputs = 8, numHoldingRegisters = 4, numInputRegisters = 4;
 const byte id = 1;
 const unsigned long baud = 38400;
-byte buf[bufLen];
-bool coils[numCoils], inputs[numInputs];
-unsigned int hRegs[numHRegs], inRegs[numInRegs];
-ModbusRTUSlave modbus(Serial1, buf, bufLen, coils, numCoils, inputs, numInputs, hRegs, numHRegs, inRegs, numInRegs);
 
-unsigned int hReg0Prev;
+ModbusRTUSlave modbus(Serial1);
+
+boolean coils[numCoils], discreteInputs[numDiscreteInputs];
+word holdingRegisters[numHoldingRegisters], inputRegisters[numInputRegisters];
+boolean coilRead(word address) {return coils[address];}
+void coilWrite(word address, boolean value) {coils[address] = value;}
+boolean discreteInputRead(word address) {return discreteInputs[address];}
+word holdingRegisterRead(word address) {return holdingRegisters[address];}
+void holdingRegisterWrite(word address, word value) {holdingRegisters[address] = value;}
+word inputRegisterRead(word address) {return inputRegisters[address];}
+
+word holdingRegisterOld;
 
 void setup() {
   Serial.begin(9600);
   while(millis() < 2000 and !Serial);
-  Serial.println(hRegs[0]);
+  Serial.println(holdingRegisters[0]);
   
   pinMode(buttonPin, INPUT_PULLUP);
   pinMode(ledPin, OUTPUT);
   pinMode(potPin, INPUT);
 
+  modbus.configureCoils(numCoils, coilRead, coilWrite);
+  modbus.configureDiscreteInputs(numDiscreteInputs, discreteInputRead);
+  modbus.configureHoldingRegisters(numHoldingRegisters, holdingRegisterRead, holdingRegisterWrite);
+  modbus.configureInputRegisters(numInputRegisters, inputRegisterRead);
   Serial1.begin(baud);
   modbus.begin(id, baud);
 
 }
 
 void loop() {
-  inputs[0] = !digitalRead(buttonPin);
-  inRegs[0] = analogRead(potPin);
+  discreteInputs[0] = !digitalRead(buttonPin);
+  inputRegisters[0] = analogRead(potPin);
 
   modbus.poll();
 
   digitalWrite(ledPin, coils[0]);
-  if (hRegs[0] != hReg0Prev) {
-    hReg0Prev = hRegs[0];
-    Serial.println(hRegs[0]);
+  if (holdingRegisters[0] != holdingRegisterOld) {
+    holdingRegisterOld = holdingRegisters[0];
+    Serial.println(holdingRegisters[0]);
   }
   
 }

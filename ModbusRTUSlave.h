@@ -2,7 +2,6 @@
 #define ModbusRTUSlave_h
 
 #include "Arduino.h"
-#include <SoftwareSerial.h>
 
 class ModbusRTUSlave {
   public:

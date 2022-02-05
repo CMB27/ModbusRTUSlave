@@ -1,8 +1,6 @@
 #include "ModbusRTUSlave.h"
 
-const byte buttonPin = 12;
-const byte ledPin = 13;
-const byte potPin = A0;
+const byte buttonPin = 12, ledPin = 13, potPin = A0;
 
 const size_t bufLen = 256, numCoils = 8, numInputs = 8, numHRegs = 4, numInRegs = 4;
 const byte id = 1;
@@ -16,7 +14,8 @@ unsigned int hReg0Prev;
 
 void setup() {
   Serial.begin(9600);
-  while (!Serial);
+  while(millis() < 2000 and !Serial);
+  Serial.println(hRegs[0]);
   
   pinMode(buttonPin, INPUT_PULLUP);
   pinMode(ledPin, OUTPUT);

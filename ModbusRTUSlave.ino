@@ -1,30 +1,21 @@
 #include "ModbusRTUSlave.h"
 
-const byte buttonPin = 12, ledPin = 13, voltagePin = A0;
+const byte buttonPin = 12, led1Pin = 11,  led2Pin = 13, voltagePin = A0;
 
-const word bufSize = 256, numCoils = 8, numDiscreteInputs = 8, numHoldingRegisters = 4, numInputRegisters = 4;
+const word bufSize = 256, numCoils = 1, numDiscreteInputs = 1, numHoldingRegisters = 1, numInputRegisters = 1;
 const byte id = 1;
 const unsigned long baud = 38400;
 byte buf[bufSize];
 
 ModbusRTUSlave modbus(Serial1, buf, bufSize);
 
-boolean coils[numCoils], discreteInputs[numDiscreteInputs];
-word holdingRegisters[numHoldingRegisters], inputRegisters[numInputRegisters];
-
-word holdingRegisterOld;
+word led2Value;
 
 void setup() {
-  
-  Serial.begin(9600);
-  while(millis() < 2000 and !Serial);
-  Serial.println(holdingRegisters[0]);
-  
-  
   pinMode(buttonPin, INPUT_PULLUP);
-  pinMode(ledPin, OUTPUT);
+  pinMode(led1Pin, OUTPUT);
+  pinMode(led2Pin, OUTPUT);
   pinMode(voltagePin, INPUT);
-
   modbus.configureCoils(numCoils, coilRead, coilWrite);
   modbus.configureDiscreteInputs(numDiscreteInputs, discreteInputRead);
   modbus.configureHoldingRegisters(numHoldingRegisters, holdingRegisterRead, holdingRegisterWrite);
@@ -34,40 +25,38 @@ void setup() {
 }
 
 void loop() {
-  discreteInputs[0] = !digitalRead(buttonPin);
-  inputRegisters[0] = analogRead(voltagePin);
-
   modbus.poll();
-
-  digitalWrite(ledPin, coils[0]);
-  if (holdingRegisters[0] != holdingRegisterOld) {
-    holdingRegisterOld = holdingRegisters[0];
-    Serial.println(holdingRegisters[0]);
-  }
 }
 
 char coilRead(word address) {
-  return coils[address];
+  if (address == 0) return digitalRead(led1Pin);
+  else return false;
 }
 
 boolean coilWrite(word address, boolean value) {
-  coils[address] = value;
+  if (address == 0) digitalWrite(led1Pin, value);
   return true;
 }
 
 char discreteInputRead(word address) {
-  return discreteInputs[address];
+  if (address == 0) return !digitalRead(buttonPin);
+  else return false;
 }
 
 long holdingRegisterRead(word address) {
-  return holdingRegisters[address];
+  if (address == 0) return led2Value;
+  else return 0;
 }
 
 boolean holdingRegisterWrite(word address, word value) {
-  holdingRegisters[address] = value;
+  if (address == 0) {
+    led2Value = value;
+    analogWrite(led2Pin, map(led2Value, 0, 100, 0, 255));
+  }
   return true;
 }
 
 long inputRegisterRead(word address) {
-  return inputRegisters[address];
+  if (address == 0) return map(analogRead(voltagePin), 0, 1023, 0, 5000);
+  else return 0;
 }

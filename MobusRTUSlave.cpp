@@ -1,7 +1,9 @@
 #include "ModbusRTUSlave.h"
 
-ModbusRTUSlave::ModbusRTUSlave(Stream& serial, uint8_t dePin) {
+ModbusRTUSlave::ModbusRTUSlave(Stream& serial, uint8_t *buf, uint16_t bufSize, uint8_t dePin) {
   _serial = &serial;
+  _buf = buf;
+  _bufSize = bufSize;
   _dePin = dePin;
 }
 
@@ -68,9 +70,9 @@ void ModbusRTUSlave::poll() {
         _buf[i] = _serial->read();
         i++;
       }
-    } while (micros() - startTime < _charTimeout && i < _MB_RTU_BUF_SIZE);
+    } while (micros() - startTime < _charTimeout && i < _bufSize);
     while (micros() - startTime < _frameTimeout);
-    if (_serial->available() == 0 && _buf[0] == _id && _crc(i - 2) == _bytesToInt(_buf[i - 1], _buf[i - 2])) {
+    if (_serial->available() == 0 && _buf[0] == _id && _crc(i - 2) == _bytesToWord(_buf[i - 1], _buf[i - 2])) {
       switch (_buf[1]) {
         case 1: /* Read Coils */
           _processBoolRead(_numCoils, _coilRead);
@@ -86,8 +88,8 @@ void ModbusRTUSlave::poll() {
           break;
         case 5: /* Write Single Coil */
           {
-            uint16_t address = _bytesToInt(_buf[2], _buf[3]);
-            uint16_t value = _bytesToInt(_buf[4], _buf[5]);
+            uint16_t address = _bytesToWord(_buf[2], _buf[3]);
+            uint16_t value = _bytesToWord(_buf[4], _buf[5]);
             if (value != 0 && value != 0xFF00) _exceptionResponse(3);
             else if (address >= _numCoils) _exceptionResponse(2);
             else if (!_coilWrite(address, value)) _exceptionResponse(4);
@@ -96,8 +98,8 @@ void ModbusRTUSlave::poll() {
           break;
         case 6: /* Write Single Holding Register */
           {
-            uint16_t address = _bytesToInt(_buf[2], _buf[3]);
-            uint16_t value = _bytesToInt(_buf[4], _buf[5]);
+            uint16_t address = _bytesToWord(_buf[2], _buf[3]);
+            uint16_t value = _bytesToWord(_buf[4], _buf[5]);
             if (address >= _numHoldingRegisters) _exceptionResponse(2);
             else if (!_holdingRegisterWrite(address, value)) _exceptionResponse(4);
             else _write(6);
@@ -105,9 +107,9 @@ void ModbusRTUSlave::poll() {
           break;
         case 15: /* Write Multiple Coils */
           {
-            uint16_t startAddress = _bytesToInt(_buf[2], _buf[3]);
-            uint16_t quantity = _bytesToInt(_buf[4], _buf[5]);
-            if (quantity == 0 || quantity > ((_MB_RTU_BUF_SIZE - 10) << 3) || _buf[6] != _div8RndUp(quantity)) _exceptionResponse(3);
+            uint16_t startAddress = _bytesToWord(_buf[2], _buf[3]);
+            uint16_t quantity = _bytesToWord(_buf[4], _buf[5]);
+            if (quantity == 0 || quantity > ((_bufSize - 10) << 3) || _buf[6] != _div8RndUp(quantity)) _exceptionResponse(3);
             else if ((startAddress + quantity) > _numCoils) _exceptionResponse(2);
             else {
               for (uint8_t j = 0; j < quantity; j++) {
@@ -122,13 +124,13 @@ void ModbusRTUSlave::poll() {
           break;
         case 16: /* Write Multiple Holding Registers */
           {
-            uint16_t startAddress = _bytesToInt(_buf[2], _buf[3]);
-            uint16_t quantity = _bytesToInt(_buf[4], _buf[5]);
-            if (quantity == 0 || quantity > ((_MB_RTU_BUF_SIZE - 10) >> 1) || _buf[6] != (quantity * 2)) _exceptionResponse(3);
+            uint16_t startAddress = _bytesToWord(_buf[2], _buf[3]);
+            uint16_t quantity = _bytesToWord(_buf[4], _buf[5]);
+            if (quantity == 0 || quantity > ((_bufSize - 10) >> 1) || _buf[6] != (quantity * 2)) _exceptionResponse(3);
             else if (startAddress + quantity > _numHoldingRegisters) _exceptionResponse(2);
             else {
               for (uint8_t j = 0; j < quantity; j++) {
-                if (!_holdingRegisterWrite(startAddress + j, _bytesToInt(_buf[j * 2 + 7], _buf[j * 2 + 8]))) {
+                if (!_holdingRegisterWrite(startAddress + j, _bytesToWord(_buf[j * 2 + 7], _buf[j * 2 + 8]))) {
                   _exceptionResponse(4);
                   return;
                 }
@@ -146,9 +148,9 @@ void ModbusRTUSlave::poll() {
 }
 
 void ModbusRTUSlave::_processBoolRead(uint16_t numBools, BoolRead boolRead) {
-  uint16_t startAddress = _bytesToInt(_buf[2], _buf[3]);
-  uint16_t quantity = _bytesToInt(_buf[4], _buf[5]);
-  if (quantity == 0 || quantity > ((_MB_RTU_BUF_SIZE - 6) * 8)) _exceptionResponse(3);
+  uint16_t startAddress = _bytesToWord(_buf[2], _buf[3]);
+  uint16_t quantity = _bytesToWord(_buf[4], _buf[5]);
+  if (quantity == 0 || quantity > ((_bufSize - 6) * 8)) _exceptionResponse(3);
   else if ((startAddress + quantity) > numBools) _exceptionResponse(2);
   else {
     for (uint8_t j = 0; j < quantity; j++) {
@@ -165,9 +167,9 @@ void ModbusRTUSlave::_processBoolRead(uint16_t numBools, BoolRead boolRead) {
 }
 
 void ModbusRTUSlave::_processWordRead(uint16_t numWords, WordRead wordRead) {
-  uint16_t startAddress = _bytesToInt(_buf[2], _buf[3]);
-  uint16_t quantity = _bytesToInt(_buf[4], _buf[5]);
-  if (quantity == 0 || quantity > ((_MB_RTU_BUF_SIZE - 6) >> 1)) _exceptionResponse(3);
+  uint16_t startAddress = _bytesToWord(_buf[2], _buf[3]);
+  uint16_t quantity = _bytesToWord(_buf[4], _buf[5]);
+  if (quantity == 0 || quantity > ((_bufSize - 6) >> 1)) _exceptionResponse(3);
   else if ((startAddress + quantity) > numWords) _exceptionResponse(2);
   else {
     for (uint8_t j = 0; j < quantity; j++) {
@@ -218,6 +220,6 @@ uint16_t ModbusRTUSlave::_div8RndUp(uint16_t value) {
   return (value + 7) >> 3;
 }
 
-uint16_t ModbusRTUSlave::_bytesToInt(uint8_t high, uint8_t low) {
+uint16_t ModbusRTUSlave::_bytesToWord(uint8_t high, uint8_t low) {
   return (high << 8) | low;
 }

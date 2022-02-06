@@ -1,12 +1,13 @@
 #include "ModbusRTUSlave.h"
 
-const byte buttonPin = 12, ledPin = 13, potPin = A0;
+const byte buttonPin = 12, ledPin = 13, voltagePin = A0;
 
-const word numCoils = 8, numDiscreteInputs = 8, numHoldingRegisters = 4, numInputRegisters = 4;
+const word bufSize = 256, numCoils = 8, numDiscreteInputs = 8, numHoldingRegisters = 4, numInputRegisters = 4;
 const byte id = 1;
 const unsigned long baud = 38400;
+byte buf[bufSize];
 
-ModbusRTUSlave modbus(Serial1);
+ModbusRTUSlave modbus(Serial1, buf, bufSize);
 
 boolean coils[numCoils], discreteInputs[numDiscreteInputs];
 word holdingRegisters[numHoldingRegisters], inputRegisters[numInputRegisters];
@@ -14,13 +15,15 @@ word holdingRegisters[numHoldingRegisters], inputRegisters[numInputRegisters];
 word holdingRegisterOld;
 
 void setup() {
+  
   Serial.begin(9600);
   while(millis() < 2000 and !Serial);
   Serial.println(holdingRegisters[0]);
   
+  
   pinMode(buttonPin, INPUT_PULLUP);
   pinMode(ledPin, OUTPUT);
-  pinMode(potPin, INPUT);
+  pinMode(voltagePin, INPUT);
 
   modbus.configureCoils(numCoils, coilRead, coilWrite);
   modbus.configureDiscreteInputs(numDiscreteInputs, discreteInputRead);
@@ -32,7 +35,7 @@ void setup() {
 
 void loop() {
   discreteInputs[0] = !digitalRead(buttonPin);
-  inputRegisters[0] = analogRead(potPin);
+  inputRegisters[0] = analogRead(voltagePin);
 
   modbus.poll();
 

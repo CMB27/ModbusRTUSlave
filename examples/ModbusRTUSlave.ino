@@ -1,6 +1,6 @@
 #include "ModbusRTUSlave.h"
 
-const byte buttonPin = 12, led1Pin = 11,  led2Pin = 13, voltagePin = A0;
+const byte buttonPin = 12, led1Pin = 13,  led2Pin = 11, voltagePin = A0;
 
 const word bufSize = 256, numCoils = 1, numDiscreteInputs = 1, numHoldingRegisters = 1, numInputRegisters = 1;
 const byte id = 1;

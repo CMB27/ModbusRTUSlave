@@ -72,7 +72,7 @@ void ModbusRTUSlave::poll() {
       }
     } while (micros() - startTime < _charTimeout && i < _bufSize);
     while (micros() - startTime < _frameTimeout);
-    if (_serial->available() == 0 && _buf[0] == _id && _crc(i - 2) == _bytesToWord(_buf[i - 1], _buf[i - 2])) {
+    if (_serial->available() == 0 && (_buf[0] == _id || _buf[0] == 0) && _crc(i - 2) == _bytesToWord(_buf[i - 1], _buf[i - 2])) {
       switch (_buf[1]) {
         case 1: /* Read Coils */
           _processBoolRead(_numCoils, _coilRead);
@@ -193,12 +193,14 @@ void ModbusRTUSlave::_exceptionResponse(uint8_t code) {
 }
 
 void ModbusRTUSlave::_write(uint8_t len) {
-  uint16_t crc = _crc(len);
-  _buf[len] = lowByte(crc);
-  _buf[len + 1] = highByte(crc);
-  if (_dePin != 255) digitalWrite(_dePin, HIGH);
-  _serial->write(_buf, len + 2);
-  if (_dePin != 255) digitalWrite(_dePin, LOW);
+  if (_buf[0] != 0) {
+    uint16_t crc = _crc(len);
+    _buf[len] = lowByte(crc);
+    _buf[len + 1] = highByte(crc);
+    if (_dePin != 255) digitalWrite(_dePin, HIGH);
+    _serial->write(_buf, len + 2);
+    if (_dePin != 255) digitalWrite(_dePin, LOW);
+  }
 }
 
 uint16_t ModbusRTUSlave::_crc(uint8_t len) {

@@ -1,11 +1,13 @@
 #ifndef ModbusRTUSlave_h
 #define ModbusRTUSlave_h
 
+#define NO_DE_PIN 255
+
 #include "Arduino.h"
 
 class ModbusRTUSlave {
   public:
-    ModbusRTUSlave(Stream& serial, uint8_t *buf, uint16_t bufSize, uint8_t dePin = 255);
+    ModbusRTUSlave(Stream& serial, uint8_t *buf, uint16_t bufSize, uint8_t dePin = NO_DE_PIN, uint32_t responseDelay = 0);
     typedef int8_t (*BoolRead)(uint16_t);
     typedef bool (*BoolWrite)(uint16_t, bool);
     typedef int32_t (*WordRead)(uint16_t);
@@ -35,6 +37,7 @@ class ModbusRTUSlave {
     uint8_t _id;
     uint32_t _charTimeout;
     uint32_t _frameTimeout;
+    uint32_t _responseDelay;
     void _processBoolRead(uint16_t numBools, BoolRead boolRead);
     void _processWordRead(uint16_t numWords, WordRead wordRead);
     void _exceptionResponse(uint8_t code);

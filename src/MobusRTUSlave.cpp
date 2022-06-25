@@ -1,10 +1,11 @@
 #include "ModbusRTUSlave.h"
 
-ModbusRTUSlave::ModbusRTUSlave(Stream& serial, uint8_t *buf, uint16_t bufSize, uint8_t dePin) {
+ModbusRTUSlave::ModbusRTUSlave(Stream& serial, uint8_t *buf, uint16_t bufSize, uint8_t dePin, uint32_t responseDelay) {
   _serial = &serial;
   _buf = buf;
   _bufSize = bufSize;
   _dePin = dePin;
+  _responseDelay = responseDelay;
 }
 
 void ModbusRTUSlave::configureCoils(uint16_t numCoils, BoolRead coilRead, BoolWrite coilWrite) {
@@ -193,6 +194,7 @@ void ModbusRTUSlave::_exceptionResponse(uint8_t code) {
 }
 
 void ModbusRTUSlave::_write(uint8_t len) {
+  delay(_responseDelay);
   if (_buf[0] != 0) {
     uint16_t crc = _crc(len);
     _buf[len] = lowByte(crc);

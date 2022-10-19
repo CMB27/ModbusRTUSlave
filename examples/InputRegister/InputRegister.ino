@@ -14,6 +14,8 @@
 
   Created: 2020-02-19
   By: C. M. Bulliner
+  Modified: 2022-10-18
+  By: C. M. Bulliner
 
 */
 
@@ -38,7 +40,7 @@ SoftwareSerial mySerial(rxPin, txPin);
 // Initilize a ModbusRTUSlave.
 ModbusRTUSlave modbus(mySerial, buf, bufSize);
 
-// This is a funciton that will be passed to the ModbusRTUSlave for reading input registers.
+// This is a function that will be passed to the ModbusRTUSlave for reading input registers.
 long inputRegisterRead(word address) {
   if (address == sensorAddress) return analogRead(sensorPin);
   else return false;
@@ -60,6 +62,6 @@ void setup() {
 
 void loop() {
   // Poll for Modbus RTU requests from the master device.
-  // This will autmatically run the inputRegisterRead function as needed.
+  // This will automatically run the inputRegisterRead function as needed.
   modbus.poll();
 }

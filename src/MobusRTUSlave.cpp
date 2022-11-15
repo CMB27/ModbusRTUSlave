@@ -64,7 +64,7 @@ void ModbusRTUSlave::begin(uint8_t id, uint32_t baud, uint8_t config) {
 void ModbusRTUSlave::poll() {
   if (_serial->available() > 0) {
     uint8_t i = 0;
-    uint32_t startTime;
+    uint32_t startTime = 0;
     do {
       if (_serial->available() > 0) {
         startTime = micros();

@@ -1,0 +1,112 @@
+/*
+  ModbusRTUSlave Library - Coils_RS485
+  
+  This sketch demonstrates how to setup ModbusRTUSlave with 2 coils.
+  This sketch requires a Modbus RTU master/client device with an RS-485 port.
+  An 8-pin half-duplex RS-485 transceiver will be needed.
+  Make sure you use one that works with the logic voltage of your Arduino (3.3 or 5V).
+  Below is the typical pinout of a half-duplex RS-485 transceiver.
+  
+      .-------.
+  RO -|1     8|- VCC
+  RE -|2     7|- B
+  DE -|3     6|- A
+  DI -|4     5|- GND
+      '-------'
+  
+  The master/client will need to be cofigured using the following settings:
+  - Baud Rate: 38400
+  - Data Bits: 8
+  - Parity: None
+  - Stop Bit(s): 1
+  - Slave/Server ID: 1
+  - Coils: 0 and 1
+  
+  Circuit:
+  - Piezo speaker from Arduino pin 8 to GND
+  - RO pin of the RS-485 transceiver to pin 10
+  - DI pin of the RS-485 transceiver to pin 11
+  - Both DE and RE pins of the RS-485 transceiver are connected together and to pin 12
+  - LED from pin 13 to GND with appropriate series resistor (the built in LED will do)
+  
+  - GND pin of the RS-485 transceiver to GND
+  - VCC pin to your Arduino's logic voltage (3.3 or 5V)
+  - The A pin to the A pin of the master/client's RS-485 port
+  - The B pin to the B pin of the master/client's RS-485 port
+  
+  It is recommended to add a bypass capacitor near the RS-485 transceiver going from VCC to GND.
+  It may also be a good idea to add a 120 Ohm or 150 Ohm resistor near the RS-485 transceiver going from A to B.
+  
+  Created: 2022-11-19
+  By: C. M. Bulliner
+  
+*/
+
+#include <SoftwareSerial.h>
+#include <ModbusRTUSlave.h>
+
+const byte id = 1;
+const unsigned long baud = 38400;
+const unsigned int bufSize = 256;
+
+const unsigned int numCoils = 2;
+
+const byte tonePin = 8;
+const byte rxPin = 10;
+const byte txPin = 11;
+const byte dePin = 12;
+const byte ledPin = 13;
+
+byte buf[bufSize];
+SoftwareSerial mySerial(rxPin, txPin);
+ModbusRTUSlave modbus(mySerial, buf, bufSize, dePin);
+
+boolean toneActive = 0;
+unsigned int toneFrequency = 2000;
+
+// This is a function that will be passed to ModbusRTUSlave for reading coils.
+char coilRead(unsigned int address) {
+  switch (address) {
+    case 0:
+      return digitalRead(ledPin);
+      // No "break" is needed because we exited the function with "return".
+    case 1:
+      return toneActive;
+  }
+  // -1 can be returned if there is an error in getting a coil value.
+  // This will cause the library to send the appropriate exception response to the master/client device.
+}
+
+// This is a function that will be passed to ModbusRTUSlave for writing to coils.
+boolean coilWrite(unsigned int address, boolean value) {
+  switch (address) {
+    case 0:
+      digitalWrite(ledPin, value);
+      break;
+    case 1:
+      toneActive = value;
+      break;
+  }
+  return true;
+  // false or 0 can be returned if there is an error in setting a coil value.
+  // This will cause the library to send the appropriate exception response to the master/client device.
+}
+
+void setup() {
+  pinMode(tonePin, OUTPUT);
+  pinMode(ledPin, OUTPUT);
+  
+  mySerial.begin(baud);
+  modbus.begin(id, baud);
+  modbus.configureCoils(numCoils, coilRead, coilWrite);
+}
+
+void loop() {
+  modbus.poll();
+  if (toneActive == true and toneFrequency >= 31) {
+    tone(tonePin, toneFrequency);
+  }
+  else {
+    noTone(tonePin);
+  }
+}

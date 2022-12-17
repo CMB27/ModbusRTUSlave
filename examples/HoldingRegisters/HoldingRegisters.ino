@@ -22,6 +22,8 @@
   
   Created: 2022-11-19
   By: C. M. Bulliner
+  Modified: 2022-12-17
+  By: C. M. Bulliner
   
 */
 
@@ -65,11 +67,14 @@ long holdingRegisterRead(unsigned int address) {
 boolean holdingRegisterWrite(word address, word value) {
   switch (address) {
     case 0:
-      dutyCycle = value;
+      dutyCycle = constrain(value, 0, 255);
       analogWrite(pwmPin, dutyCycle);
       break;
     case 1:
-      toneFrequency = value;
+      toneFrequency = 0;
+      if (value >= 31) {
+        toneFrequency = value;
+      }
       break;
   }
   return true;
@@ -88,7 +93,7 @@ void setup() {
 
 void loop() {
   modbus.poll();
-  if (toneActive == true and toneFrequency >= 31) {
+  if (toneActive == true and toneFrequency > 0) {
     tone(tonePin, toneFrequency);
   }
   else {

@@ -43,7 +43,7 @@ SoftwareSerial mySerial(rxPin, txPin);
 ModbusRTUSlave modbus(mySerial, buf, bufSize);
 
 // This is a function that will be passed to the ModbusRTUSlave for reading discrete inputs.
-char discreteInputRead(unsigned int address) {
+int8_t discreteInputRead(uint16_t address) {
   return !digitalRead(buttonPins[address]);
   // -1 can be returned if there is an error in getting a discrete input value.
   // This will cause the library to send the appropriate exception response to the master/client device.

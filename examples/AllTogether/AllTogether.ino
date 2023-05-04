@@ -92,7 +92,7 @@ void loop() {
 
 
 
-char coilRead(unsigned int address) {
+int8_t coilRead(uint16_t address) {
   switch (address) {
     case 0:
       return digitalRead(ledPin);
@@ -101,7 +101,7 @@ char coilRead(unsigned int address) {
   }
 }
 
-boolean coilWrite(unsigned int address, boolean value) {
+boolean coilWrite(uint16_t address, boolean value) {
   switch (address) {
     case 0:
       digitalWrite(ledPin, value);
@@ -113,11 +113,11 @@ boolean coilWrite(unsigned int address, boolean value) {
   return true;
 }
 
-char discreteInputRead(unsigned int address) {
+int8_t discreteInputRead(uint16_t address) {
   return !digitalRead(buttonPins[address]);
 }
 
-long holdingRegisterRead(unsigned int address) {
+int32_t holdingRegisterRead(uint16_t address) {
   switch (address) {
     case 0:
       return dutyCycle;
@@ -126,7 +126,7 @@ long holdingRegisterRead(unsigned int address) {
   }
 }
 
-boolean holdingRegisterWrite(word address, word value) {
+boolean holdingRegisterWrite(uint16_t address, uint16_t value) {
   switch (address) {
     case 0:
       dutyCycle = constrain(value, 0, 255);
@@ -142,6 +142,6 @@ boolean holdingRegisterWrite(word address, word value) {
   return true;
 }
 
-long inputRegisterRead(word address) {
+int32_t inputRegisterRead(uint16_t address) {
   return analogRead(potPins[address]);
 }

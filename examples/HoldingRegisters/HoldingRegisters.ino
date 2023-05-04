@@ -51,7 +51,7 @@ unsigned int toneFrequency = 0;
 
 
 // This is a function that will be passed to the ModbusRTUSlave for reading holding registers.
-long holdingRegisterRead(unsigned int address) {
+int32_t holdingRegisterRead(uint16_t address) {
   switch (address) {
     case 0:
       return dutyCycle;
@@ -64,7 +64,7 @@ long holdingRegisterRead(unsigned int address) {
 }
 
 // This is a function that will be passed to the ModbusRTUSlave for writing to holding registers.
-boolean holdingRegisterWrite(word address, word value) {
+boolean holdingRegisterWrite(uint16_t address, uint16_t value) {
   switch (address) {
     case 0:
       dutyCycle = constrain(value, 0, 255);

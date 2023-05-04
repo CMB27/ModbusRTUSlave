@@ -43,7 +43,7 @@ SoftwareSerial mySerial(rxPin, txPin);
 ModbusRTUSlave modbus(mySerial, buf, bufSize);
 
 // This is a function that will be passed to the ModbusRTUSlave for reading input registers.
-long inputRegisterRead(word address) {
+int32_t inputRegisterRead(uint16_t address) {
   return analogRead(potPins[address]);
   // -1 can be returned if there is an error in getting a discrete input value.
   // This will cause the library to send the appropriate exception response to the master/client device.

@@ -65,7 +65,7 @@ boolean toneActive = 0;
 unsigned int toneFrequency = 2000;
 
 // This is a function that will be passed to ModbusRTUSlave for reading coils.
-char coilRead(unsigned int address) {
+int8_t coilRead(uint16_t address) {
   switch (address) {
     case 0:
       return digitalRead(ledPin);
@@ -78,7 +78,7 @@ char coilRead(unsigned int address) {
 }
 
 // This is a function that will be passed to ModbusRTUSlave for writing to coils.
-boolean coilWrite(unsigned int address, boolean value) {
+boolean coilWrite(uint16_t address, boolean value) {
   switch (address) {
     case 0:
       digitalWrite(ledPin, value);

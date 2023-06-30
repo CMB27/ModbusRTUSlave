@@ -1,11 +1,10 @@
 #include "ModbusRTUSlave.h"
 
-ModbusRTUSlave::ModbusRTUSlave(Stream& serial, uint8_t *buf, uint16_t bufSize, uint8_t dePin, uint32_t responseDelay) {
+ModbusRTUSlave::ModbusRTUSlave(Stream& serial, uint8_t *buf, uint16_t bufSize, uint8_t dePin) {
   _serial = &serial;
   _buf = buf;
   _bufSize = bufSize;
   _dePin = dePin;
-  _responseDelay = responseDelay;
 }
 
 void ModbusRTUSlave::configureCoils(uint16_t numCoils, BoolRead coilRead, BoolWrite coilWrite) {
@@ -94,7 +93,7 @@ void ModbusRTUSlave::poll() {
             if (value != 0 && value != 0xFF00) _exceptionResponse(3);
             else if (address >= _numCoils) _exceptionResponse(2);
             else if (!_coilWrite(address, value)) _exceptionResponse(4);
-            else _write(6);
+            else _respond(6);
           }
           break;
         case 6: /* Write Single Holding Register */
@@ -103,7 +102,7 @@ void ModbusRTUSlave::poll() {
             uint16_t value = _bytesToWord(_buf[4], _buf[5]);
             if (address >= _numHoldingRegisters) _exceptionResponse(2);
             else if (!_holdingRegisterWrite(address, value)) _exceptionResponse(4);
-            else _write(6);
+            else _respond(6);
           }
           break;
         case 15: /* Write Multiple Coils */
@@ -119,7 +118,7 @@ void ModbusRTUSlave::poll() {
                   return;
                 }
               }
-              _write(6);
+              _respond(6);
             }
           }
           break;
@@ -136,7 +135,7 @@ void ModbusRTUSlave::poll() {
                   return;
                 }
               }
-              _write(6);
+              _respond(6);
             }
           }
           break;
@@ -163,7 +162,7 @@ void ModbusRTUSlave::_processBoolRead(uint16_t numBools, BoolRead boolRead) {
       bitWrite(_buf[3 + (j >> 3)], j & 7, value);
     }
     _buf[2] = _div8RndUp(quantity);
-    _write(3 + _buf[2]);
+    _respond(3 + _buf[2]);
   }
 }
 
@@ -183,42 +182,39 @@ void ModbusRTUSlave::_processWordRead(uint16_t numWords, WordRead wordRead) {
       _buf[4 + (j * 2)] = lowByte(value);
     }
     _buf[2] = quantity * 2;
-    _write(3 + _buf[2]);
+    _respond(3 + _buf[2]);
   }
 }
 
 void ModbusRTUSlave::_exceptionResponse(uint8_t code) {
   _buf[1] |= 0x80;
   _buf[2] = code;
-  _write(3);
+  _respond(3);
 }
 
-void ModbusRTUSlave::_write(uint8_t len) {
-  delay(_responseDelay);
+void ModbusRTUSlave::_respond(uint8_t len) {
   if (_buf[0] != 0) {
     uint16_t crc = _crc(len);
     _buf[len] = lowByte(crc);
     _buf[len + 1] = highByte(crc);
-    if (_dePin != 255) digitalWrite(_dePin, HIGH);
+    if (_dePin != NO_DE_PIN) digitalWrite(_dePin, HIGH);
     _serial->write(_buf, len + 2);
     _serial->flush();
-    if (_dePin != 255) digitalWrite(_dePin, LOW);
+    if (_dePin != NO_DE_PIN) digitalWrite(_dePin, LOW);
   }
 }
 
 uint16_t ModbusRTUSlave::_crc(uint8_t len) {
-  uint16_t crc = 0xFFFF;
+  uint16_t value = 0xFFFF;
   for (uint8_t i = 0; i < len; i++) {
-    crc ^= (uint16_t)_buf[i];
+    value ^= (uint16_t)_buf[i];
     for (uint8_t j = 0; j < 8; j++) {
-      bool lsb = crc & 1;
-      crc >>= 1;
-      if (lsb == true) {
-        crc ^= 0xA001;
-      }
+      bool lsb = value & 1;
+      value >>= 1;
+      if (lsb) value ^= 0xA001;
     }
   }
-  return crc;
+  return value;
 }
 
 uint16_t ModbusRTUSlave::_div8RndUp(uint16_t value) {

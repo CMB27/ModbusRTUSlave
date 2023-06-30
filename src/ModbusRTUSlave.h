@@ -7,7 +7,7 @@
 
 class ModbusRTUSlave {
   public:
-    ModbusRTUSlave(Stream& serial, uint8_t *buf, uint16_t bufSize, uint8_t dePin = NO_DE_PIN, uint32_t responseDelay = 0);
+    ModbusRTUSlave(Stream& serial, uint8_t *buf, uint16_t bufSize, uint8_t dePin = NO_DE_PIN);
     typedef int8_t (*BoolRead)(uint16_t);
     typedef bool (*BoolWrite)(uint16_t, bool);
     typedef int32_t (*WordRead)(uint16_t);
@@ -37,11 +37,10 @@ class ModbusRTUSlave {
     uint8_t _id;
     uint32_t _charTimeout;
     uint32_t _frameTimeout;
-    uint32_t _responseDelay;
     void _processBoolRead(uint16_t numBools, BoolRead boolRead);
     void _processWordRead(uint16_t numWords, WordRead wordRead);
     void _exceptionResponse(uint8_t code);
-    void _write(uint8_t len);
+    void _respond(uint8_t len);
     uint16_t _crc(uint8_t len);
     uint16_t _div8RndUp(uint16_t value);
     uint16_t _bytesToWord(uint8_t high, uint8_t low);

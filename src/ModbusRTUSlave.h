@@ -40,7 +40,8 @@ class ModbusRTUSlave {
     void _processBoolRead(uint16_t numBools, BoolRead boolRead);
     void _processWordRead(uint16_t numWords, WordRead wordRead);
     void _exceptionResponse(uint8_t code);
-    void _respond(uint8_t len);
+    bool _readRequest();
+    void _writeResponse(uint8_t len);
     uint16_t _crc(uint8_t len);
     uint16_t _div8RndUp(uint16_t value);
     uint16_t _bytesToWord(uint8_t high, uint8_t low);

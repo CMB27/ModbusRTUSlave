@@ -59,11 +59,7 @@ unsigned int holdingRegisters[numHoldingRegisters];
 unsigned int inputRegisters[numInputRegisters];
 
 SoftwareSerial mySerial(rxPin, txPin);
-ModbusRTUSlave modbus(mySerial); // serial port, driver enable pin (optional)
-
-byte dutyCycle = 0;
-boolean toneActive = 0;
-unsigned int toneFrequency = 0;
+ModbusRTUSlave modbus(mySerial); // serial port, driver enable pin for rs-485 (optional)
 
 void setup() {
   pinMode(button1Pin, INPUT_PULLUP);

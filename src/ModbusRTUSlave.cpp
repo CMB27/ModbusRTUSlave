@@ -1,15 +1,41 @@
 #include "ModbusRTUSlave.h"
 
-/*
-ModbusRTUSlave::ModbusRTUSlave(Stream& serial, uint8_t dePin) {
+ModbusRTUSlave::ModbusRTUSlave(HardwareSerial& serial, uint8_t dePin) {
+  _hardwareSerial = &serial;
+   #ifdef __AVR__
+  _softwareSerial = 0;
+   #endif
+   #ifdef HAVE_CDCSERIAL
+  _usbSerial = 0;
+   #endif
   _serial = &serial;
   _dePin = dePin;
 }
-*/
 
-ModbusRTUSlave::ModbusRTUSlave(uint8_t id) {
-  _id = id;
+#ifdef __AVR__
+ModbusRTUSlave::ModbusRTUSlave(SoftwareSerial& serial, uint8_t dePin) {
+  _hardwareSerial = 0;
+  _softwareSerial = &serial;
+  #ifdef HAVE_CDCSERIAL
+  _usbSerial = 0;
+  #endif
+  _serial = &serial;
+  _dePin = dePin;
 }
+#endif
+
+#ifdef HAVE_CDCSERIAL
+ModbusRTUSlave::ModbusRTUSlave(Serial_& serial, uint8_t dePin) {
+  _hardwareSerial = 0;
+  #ifdef __AVR__
+  _softwareSerial = 0;
+  #endif
+  _usbSerial = &serial;
+  _serial = &serial;
+  _dePin = dePin;
+}
+#endif
+
 
 void ModbusRTUSlave::configureCoils(uint16_t numCoils, BoolRead coilRead, BoolWrite coilWrite) {
   _numCoils = numCoils;
@@ -33,79 +59,35 @@ void ModbusRTUSlave::configureInputRegisters(uint16_t numInputRegisters, WordRea
   _inputRegisterRead = inputRegisterRead;
 }
 
-/*
 void ModbusRTUSlave::begin(uint8_t id, uint32_t baud, uint8_t config) {
-  _id = id;
-  uint32_t startTime = micros();
-  if (baud > 19200) {
-    _charTimeout = 750;
-    _frameTimeout = 1750;
+  if (id >= 1 && id <= 247) _id = id;
+  else _id = NO_ID;
+  if (_hardwareSerial) {
+    _calculateTimeouts(baud, config);
+    _hardwareSerial->begin(baud, config);
   }
-  else if (config == 0x2E || config == 0x3E) {
-    _charTimeout = 18000000/baud;
-    _frameTimeout = 42000000/baud;
+  #ifdef __AVR__
+  else if (_softwareSerial) {
+    _calculateTimeouts(baud, SERIAL_8N1);
+    _softwareSerial->begin(baud);
   }
-  else if (config == 0x0E || config == 0x26 || config == 0x36) {
-    _charTimeout = 16500000/baud;
-    _frameTimeout = 38500000/baud;
+  #endif
+  #ifdef HAVE_CDCSERIAL
+  else if (_usbSerial) {
+    _calculateTimeouts(baud, config);
+    _usbSerial->begin(baud, config);
+    while (!_usbSerial);
   }
-  else {
-    _charTimeout = 15000000/baud;
-    _frameTimeout = 35000000/baud;
-  }
-  if (_dePin != 255) {
-    digitalWrite(_dePin, LOW);
-    pinMode(_dePin, OUTPUT);
-  }
-  do {
-    if (_serial->available() > 0) {
-      startTime = micros();
-      _serial->read();
-    }
-  } while (micros() - startTime < _frameTimeout);
-}
-*/
-
-void ModbusRTUSlave::begin(HardwareSerial& serial, uint32_t baud, uint8_t config, uint8_t dePin) {
-  _serial = &serial;
-  _calculateTimeouts(baud, config);
-  _dePin = dePin;
+  #endif
   if (_dePin != NO_DE_PIN) {
     pinMode(_dePin, OUTPUT);
     digitalWrite(_dePin, LOW);
   }
-  serial.begin(baud, config);
-  while (!serial);
   _clearRxBuffer();
 }
-
-#ifdef __AVR__
-void ModbusRTUSlave::begin(SoftwareSerial& serial, uint32_t baud, uint8_t dePin) {
-  _serial = &serial;
-  _calculateTimeouts(baud, SERIAL_8N1);
-  _dePin = dePin;
-  if (_dePin != NO_DE_PIN) {
-    pinMode(_dePin, OUTPUT);
-    digitalWrite(_dePin, LOW);
-  }
-  serial.begin(baud);
-  while (!serial);
-  _clearRxBuffer();
-}
-#endif
-
-#ifdef HAVE_CDCSERIAL
-void ModbusRTUSlave::begin(Serial_& serial, uint32_t baud, uint8_t config) {
-  _serial = &serial;
-  _calculateTimeouts(baud, config);
-  serial.begin(baud, config);
-  while (!serial);
-  _clearRxBuffer();
-}
-#endif
 
 void ModbusRTUSlave::poll() {
-  if (_serial->available() > 0) {
+  if (_serial->available()) {
     if (_readRequest()) {
       switch (_buf[1]) {
         case 1: /* Read Coils */

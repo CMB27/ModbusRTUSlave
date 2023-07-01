@@ -38,10 +38,6 @@
 #include <SoftwareSerial.h>
 #include <ModbusRTUSlave.h>
 
-const byte id = 1;
-const unsigned long baud = 38400;
-//const unsigned int bufSize = 256;
-
 const unsigned int numCoils = 2;
 const unsigned int numDiscreteInputs = 2;
 const unsigned int numHoldingRegisters = 2;
@@ -56,8 +52,7 @@ const byte ledPin = 13;
 const byte potPins[numInputRegisters] = {A0, A1};
 
 SoftwareSerial mySerial(rxPin, txPin);
-//ModbusRTUSlave modbus(mySerial);
-ModbusRTUSlave modbus(id);
+ModbusRTUSlave modbus(mySerial); // serial port, driver enable pin (optional)
 
 byte dutyCycle = 0;
 boolean toneActive = 0;
@@ -71,13 +66,13 @@ void setup() {
   pinMode(ledPin, OUTPUT);
   pinMode(potPins[0], INPUT);
   pinMode(potPins[1], INPUT);
-  
-  //mySerial.begin(baud);
-  modbus.begin(mySerial, baud);
+
   modbus.configureCoils(numCoils, coilRead, coilWrite);
   modbus.configureDiscreteInputs(numDiscreteInputs, discreteInputRead);
   modbus.configureHoldingRegisters(numHoldingRegisters, holdingRegisterRead, holdingRegisterWrite);
   modbus.configureInputRegisters(numInputRegisters, inputRegisterRead);
+  modbus.begin(1, 38400); // modbus slave id/address, baud rate, config (optional)
+  
 }
 
 void loop() {

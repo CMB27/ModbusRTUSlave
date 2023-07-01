@@ -1,10 +1,14 @@
 #include "ModbusRTUSlave.h"
 
-ModbusRTUSlave::ModbusRTUSlave(Stream& serial, uint8_t *buf, uint16_t bufSize, uint8_t dePin) {
+/*
+ModbusRTUSlave::ModbusRTUSlave(Stream& serial, uint8_t dePin) {
   _serial = &serial;
-  _buf = buf;
-  _bufSize = bufSize;
   _dePin = dePin;
+}
+*/
+
+ModbusRTUSlave::ModbusRTUSlave(uint8_t id) {
+  _id = id;
 }
 
 void ModbusRTUSlave::configureCoils(uint16_t numCoils, BoolRead coilRead, BoolWrite coilWrite) {
@@ -29,6 +33,7 @@ void ModbusRTUSlave::configureInputRegisters(uint16_t numInputRegisters, WordRea
   _inputRegisterRead = inputRegisterRead;
 }
 
+/*
 void ModbusRTUSlave::begin(uint8_t id, uint32_t baud, uint8_t config) {
   _id = id;
   uint32_t startTime = micros();
@@ -59,6 +64,45 @@ void ModbusRTUSlave::begin(uint8_t id, uint32_t baud, uint8_t config) {
     }
   } while (micros() - startTime < _frameTimeout);
 }
+*/
+
+void ModbusRTUSlave::begin(HardwareSerial& serial, uint32_t baud, uint8_t config, uint8_t dePin) {
+  _serial = &serial;
+  _calculateTimeouts(baud, config);
+  _dePin = dePin;
+  if (_dePin != NO_DE_PIN) {
+    pinMode(_dePin, OUTPUT);
+    digitalWrite(_dePin, LOW);
+  }
+  serial.begin(baud, config);
+  while (!serial);
+  _clearRxBuffer();
+}
+
+#ifdef __AVR__
+void ModbusRTUSlave::begin(SoftwareSerial& serial, uint32_t baud, uint8_t dePin) {
+  _serial = &serial;
+  _calculateTimeouts(baud, SERIAL_8N1);
+  _dePin = dePin;
+  if (_dePin != NO_DE_PIN) {
+    pinMode(_dePin, OUTPUT);
+    digitalWrite(_dePin, LOW);
+  }
+  serial.begin(baud);
+  while (!serial);
+  _clearRxBuffer();
+}
+#endif
+
+#ifdef HAVE_CDCSERIAL
+void ModbusRTUSlave::begin(Serial_& serial, uint32_t baud, uint8_t config) {
+  _serial = &serial;
+  _calculateTimeouts(baud, config);
+  serial.begin(baud, config);
+  while (!serial);
+  _clearRxBuffer();
+}
+#endif
 
 void ModbusRTUSlave::poll() {
   if (_serial->available() > 0) {
@@ -99,7 +143,7 @@ void ModbusRTUSlave::poll() {
           {
             uint16_t startAddress = _bytesToWord(_buf[2], _buf[3]);
             uint16_t quantity = _bytesToWord(_buf[4], _buf[5]);
-            if (quantity == 0 || quantity > ((_bufSize - 10) << 3) || _buf[6] != _div8RndUp(quantity)) _exceptionResponse(3);
+            if (quantity == 0 || quantity > ((MODBUS_RTU_SLAVE_BUF_SIZE - 10) << 3) || _buf[6] != _div8RndUp(quantity)) _exceptionResponse(3);
             else if ((startAddress + quantity) > _numCoils) _exceptionResponse(2);
             else {
               for (uint8_t j = 0; j < quantity; j++) {
@@ -116,7 +160,7 @@ void ModbusRTUSlave::poll() {
           {
             uint16_t startAddress = _bytesToWord(_buf[2], _buf[3]);
             uint16_t quantity = _bytesToWord(_buf[4], _buf[5]);
-            if (quantity == 0 || quantity > ((_bufSize - 10) >> 1) || _buf[6] != (quantity * 2)) _exceptionResponse(3);
+            if (quantity == 0 || quantity > ((MODBUS_RTU_SLAVE_BUF_SIZE - 10) >> 1) || _buf[6] != (quantity * 2)) _exceptionResponse(3);
             else if (startAddress + quantity > _numHoldingRegisters) _exceptionResponse(2);
             else {
               for (uint8_t j = 0; j < quantity; j++) {
@@ -137,6 +181,35 @@ void ModbusRTUSlave::poll() {
   }
 }
 
+void ModbusRTUSlave::_clearRxBuffer() {
+  uint32_t startTime = micros();
+  do {
+    if (_serial->available()) {
+      startTime = micros();
+      _serial->read();
+    }
+  } while (micros() - startTime < _frameTimeout);
+}
+
+void ModbusRTUSlave::_calculateTimeouts(uint32_t baud, uint8_t config) {
+  if (baud > 19200) {
+    _charTimeout = 750;
+    _frameTimeout = 1750;
+  }
+  if (config == SERIAL_8E2 or config == SERIAL_8O2) {
+    _charTimeout = 18000000/baud;
+    _frameTimeout = 42000000/baud;
+  }
+  else if (config == SERIAL_8N2 or config == SERIAL_8E1 or config == SERIAL_8O1) {
+    _charTimeout = 16500000/baud;
+    _frameTimeout = 38500000/baud;
+  }
+  else {
+    _charTimeout = 15000000/baud;
+    _frameTimeout = 35000000/baud;
+  }
+}
+
 bool ModbusRTUSlave::_readRequest() {
   uint8_t numBytes = 0;
   uint32_t startTime = 0;
@@ -146,16 +219,16 @@ bool ModbusRTUSlave::_readRequest() {
       _buf[numBytes] = _serial->read();
       numBytes++;
     }
-  } while (micros() - startTime < _charTimeout && numBytes < _bufSize);
+  } while (micros() - startTime < _charTimeout && numBytes < MODBUS_RTU_SLAVE_BUF_SIZE);
   while (micros() - startTime < _frameTimeout);
-  if (_serial->available() == 0 && (_buf[0] == _id || _buf[0] == 0) and _crc(numBytes - 2) == _bytesToWord(_buf[numBytes - 1], _buf[numBytes - 2])) return true;
+  if (_serial->available() == 0 && (_buf[0] == _id || _buf[0] == 0) && _crc(numBytes - 2) == _bytesToWord(_buf[numBytes - 1], _buf[numBytes - 2])) return true;
   else return false;
 }
 
 void ModbusRTUSlave::_processBoolRead(uint16_t numBools, BoolRead boolRead) {
   uint16_t startAddress = _bytesToWord(_buf[2], _buf[3]);
   uint16_t quantity = _bytesToWord(_buf[4], _buf[5]);
-  if (quantity == 0 || quantity > ((_bufSize - 6) * 8)) _exceptionResponse(3);
+  if (quantity == 0 || quantity > ((MODBUS_RTU_SLAVE_BUF_SIZE - 6) * 8)) _exceptionResponse(3);
   else if ((startAddress + quantity) > numBools) _exceptionResponse(2);
   else {
     for (uint8_t j = 0; j < quantity; j++) {
@@ -174,7 +247,7 @@ void ModbusRTUSlave::_processBoolRead(uint16_t numBools, BoolRead boolRead) {
 void ModbusRTUSlave::_processWordRead(uint16_t numWords, WordRead wordRead) {
   uint16_t startAddress = _bytesToWord(_buf[2], _buf[3]);
   uint16_t quantity = _bytesToWord(_buf[4], _buf[5]);
-  if (quantity == 0 || quantity > ((_bufSize - 6) >> 1)) _exceptionResponse(3);
+  if (quantity == 0 || quantity > ((MODBUS_RTU_SLAVE_BUF_SIZE - 6) >> 1)) _exceptionResponse(3);
   else if ((startAddress + quantity) > numWords) _exceptionResponse(2);
   else {
     for (uint8_t j = 0; j < quantity; j++) {

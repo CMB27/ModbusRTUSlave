@@ -40,7 +40,7 @@
 
 const byte id = 1;
 const unsigned long baud = 38400;
-const unsigned int bufSize = 256;
+//const unsigned int bufSize = 256;
 
 const unsigned int numCoils = 2;
 const unsigned int numDiscreteInputs = 2;
@@ -55,9 +55,9 @@ const byte txPin = 11;
 const byte ledPin = 13;
 const byte potPins[numInputRegisters] = {A0, A1};
 
-byte buf[bufSize];
 SoftwareSerial mySerial(rxPin, txPin);
-ModbusRTUSlave modbus(mySerial, buf, bufSize);
+//ModbusRTUSlave modbus(mySerial);
+ModbusRTUSlave modbus(id);
 
 byte dutyCycle = 0;
 boolean toneActive = 0;
@@ -72,8 +72,8 @@ void setup() {
   pinMode(potPins[0], INPUT);
   pinMode(potPins[1], INPUT);
   
-  mySerial.begin(baud);
-  modbus.begin(id, baud);
+  //mySerial.begin(baud);
+  modbus.begin(mySerial, baud);
   modbus.configureCoils(numCoils, coilRead, coilWrite);
   modbus.configureDiscreteInputs(numDiscreteInputs, discreteInputRead);
   modbus.configureHoldingRegisters(numHoldingRegisters, holdingRegisterRead, holdingRegisterWrite);
@@ -92,16 +92,17 @@ void loop() {
 
 
 
-char coilRead(unsigned int address) {
+int8_t coilRead(uint16_t address) {
   switch (address) {
     case 0:
       return digitalRead(ledPin);
     case 1:
       return toneActive;
   }
+  return -1;
 }
 
-boolean coilWrite(unsigned int address, boolean value) {
+bool coilWrite(uint16_t address, bool value) {
   switch (address) {
     case 0:
       digitalWrite(ledPin, value);
@@ -113,23 +114,25 @@ boolean coilWrite(unsigned int address, boolean value) {
   return true;
 }
 
-char discreteInputRead(unsigned int address) {
+int8_t discreteInputRead(uint16_t address) {
   return !digitalRead(buttonPins[address]);
 }
 
-long holdingRegisterRead(unsigned int address) {
+int32_t holdingRegisterRead(uint16_t address) {
   switch (address) {
     case 0:
       return dutyCycle;
     case 1:
       return toneFrequency;
   }
+  return -1;
 }
 
-boolean holdingRegisterWrite(word address, word value) {
+bool holdingRegisterWrite(uint16_t address, uint16_t value) {
   switch (address) {
     case 0:
-      dutyCycle = constrain(value, 0, 255);
+      if (value > 255) dutyCycle = 255;
+      else dutyCycle = value;
       analogWrite(pwmPin, dutyCycle);
       break;
     case 1:
@@ -142,6 +145,6 @@ boolean holdingRegisterWrite(word address, word value) {
   return true;
 }
 
-long inputRegisterRead(word address) {
+int32_t inputRegisterRead(uint16_t address) {
   return analogRead(potPins[address]);
 }

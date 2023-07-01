@@ -38,18 +38,25 @@
 #include <SoftwareSerial.h>
 #include <ModbusRTUSlave.h>
 
-const unsigned int numCoils = 2;
-const unsigned int numDiscreteInputs = 2;
-const unsigned int numHoldingRegisters = 2;
-const unsigned int numInputRegisters = 2;
-
-const byte buttonPins[numDiscreteInputs] = {2, 3};
+const byte button1Pin = 2;
+const byte button2Pin = 3;
 const byte tonePin = 8;
 const byte pwmPin = 9;
 const byte rxPin = 10;
 const byte txPin = 11;
 const byte ledPin = 13;
-const byte potPins[numInputRegisters] = {A0, A1};
+const byte pot1Pin = A0;
+const byte pot2Pin = A1;
+
+const unsigned int numCoils = 2;
+const unsigned int numDiscreteInputs = 2;
+const unsigned int numHoldingRegisters = 2;
+const unsigned int numInputRegisters = 2;
+
+bool coils[numCoils];
+bool discreteInputs[numDiscreteInputs];
+unsigned int holdingRegisters[numHoldingRegisters];
+unsigned int inputRegisters[numInputRegisters];
 
 SoftwareSerial mySerial(rxPin, txPin);
 ModbusRTUSlave modbus(mySerial); // serial port, driver enable pin (optional)
@@ -59,87 +66,33 @@ boolean toneActive = 0;
 unsigned int toneFrequency = 0;
 
 void setup() {
-  pinMode(buttonPins[0], INPUT_PULLUP);
-  pinMode(buttonPins[1], INPUT_PULLUP);
+  pinMode(button1Pin, INPUT_PULLUP);
+  pinMode(button2Pin, INPUT_PULLUP);
   pinMode(pwmPin, OUTPUT);
   pinMode(tonePin, OUTPUT);
   pinMode(ledPin, OUTPUT);
-  pinMode(potPins[0], INPUT);
-  pinMode(potPins[1], INPUT);
+  pinMode(pot1Pin, INPUT);
+  pinMode(pot2Pin, INPUT);
 
-  modbus.configureCoils(numCoils, coilRead, coilWrite);
-  modbus.configureDiscreteInputs(numDiscreteInputs, discreteInputRead);
-  modbus.configureHoldingRegisters(numHoldingRegisters, holdingRegisterRead, holdingRegisterWrite);
-  modbus.configureInputRegisters(numInputRegisters, inputRegisterRead);
+  modbus.configureCoils(coils, numCoils);
+  modbus.configureDiscreteInputs(discreteInputs, numDiscreteInputs);
+  modbus.configureHoldingRegisters(holdingRegisters, numHoldingRegisters);
+  modbus.configureInputRegisters(inputRegisters, numInputRegisters);
   modbus.begin(1, 38400); // modbus slave id/address, baud rate, config (optional)
   
 }
 
 void loop() {
+  discreteInputs[0] = !digitalRead(button1Pin);
+  discreteInputs[1] = !digitalRead(button2Pin);
+  inputRegisters[0] = analogRead(pot1Pin);
+  inputRegisters[1] = analogRead(pot2Pin);
+  
   modbus.poll();
-  if (toneActive == true and toneFrequency > 0) {
-    tone(tonePin, toneFrequency);
-  }
-  else {
-    noTone(tonePin);
-  }
-}
-
-
-
-int8_t coilRead(uint16_t address) {
-  switch (address) {
-    case 0:
-      return digitalRead(ledPin);
-    case 1:
-      return toneActive;
-  }
-  return -1;
-}
-
-bool coilWrite(uint16_t address, bool value) {
-  switch (address) {
-    case 0:
-      digitalWrite(ledPin, value);
-      break;
-    case 1:
-      toneActive = value;
-      break;
-  }
-  return true;
-}
-
-int8_t discreteInputRead(uint16_t address) {
-  return !digitalRead(buttonPins[address]);
-}
-
-int32_t holdingRegisterRead(uint16_t address) {
-  switch (address) {
-    case 0:
-      return dutyCycle;
-    case 1:
-      return toneFrequency;
-  }
-  return -1;
-}
-
-bool holdingRegisterWrite(uint16_t address, uint16_t value) {
-  switch (address) {
-    case 0:
-      if (value > 255) dutyCycle = 255;
-      else dutyCycle = value;
-      analogWrite(pwmPin, dutyCycle);
-      break;
-    case 1:
-      toneFrequency = 0;
-      if (value >= 31) {
-        toneFrequency = value;
-      }
-      break;
-  }
-  return true;
-}
-
-int32_t inputRegisterRead(uint16_t address) {
-  return analogRead(potPins[address]);
+  
+  digitalWrite(ledPin, coils[0]);
+  if (holdingRegisters[0] > 255) analogWrite(pwmPin, 255);
+  else analogWrite(pwmPin, holdingRegisters[0]);
+  if (coils[1] and holdingRegisters[1] > 31) tone(tonePin, holdingRegisters[1]);
+  else noTone(tonePin);
 }

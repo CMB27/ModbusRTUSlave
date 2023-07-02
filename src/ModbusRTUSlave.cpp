@@ -144,7 +144,7 @@ void ModbusRTUSlave::_processReadDiscreteInputs() {
   else if (!_discreteInputs) _exceptionResponse(4);
   else {
     _buf[2] = _div8RndUp(quantity);
-    for (uint8_t i = 0; i < quantity; i++) {
+    for (uint16_t i = 0; i < quantity; i++) {
       bitWrite(_buf[3 + (i >> 3)], i & 7, _discreteInputs[startAddress + i]);
     }
     _writeResponse(3 + _buf[2]);
@@ -160,7 +160,7 @@ void ModbusRTUSlave::_processReadHoldingRegisters() {
   else if (!_holdingRegisters) _exceptionResponse(4);
   else {
     _buf[2] = quantity * 2;
-    for (uint8_t i = 0; i < quantity; i++) {
+    for (uint16_t i = 0; i < quantity; i++) {
       _buf[3 + (i * 2)] = highByte(_holdingRegisters[startAddress + i]);
       _buf[4 + (i * 2)] = lowByte(_holdingRegisters[startAddress + i]);
     }
@@ -177,7 +177,7 @@ void ModbusRTUSlave::_processReadInputRegisters() {
   else if (!_inputRegisters) _exceptionResponse(4);
   else {
     _buf[2] = quantity * 2;
-    for (uint8_t i = 0; i < quantity; i++) {
+    for (uint16_t i = 0; i < quantity; i++) {
       _buf[3 + (i * 2)] = highByte(_inputRegisters[startAddress + i]);
       _buf[4 + (i * 2)] = lowByte(_inputRegisters[startAddress + i]);
     }
@@ -218,7 +218,7 @@ void ModbusRTUSlave::_processWriteMultipleCoils() {
   else if ((startAddress + quantity) > _numCoils) _exceptionResponse(2);
   else if (!_coils) _exceptionResponse(4);
   else {
-    for (uint8_t i = 0; i < quantity; i++) {
+    for (uint16_t i = 0; i < quantity; i++) {
       _coils[startAddress + i] = bitRead(_buf[7 + (i >> 3)], i & 7);
     }
     _writeResponse(6);
@@ -233,7 +233,7 @@ void ModbusRTUSlave::_processWriteMultipleHoldingRegisters() {
   else if (startAddress + quantity > _numHoldingRegisters) _exceptionResponse(2);
   else if (!_holdingRegisters) _exceptionResponse(4);
   else {
-    for (uint8_t i = 0; i < quantity; i++) {
+    for (uint16_t i = 0; i < quantity; i++) {
       _holdingRegisters[startAddress + i] = _bytesToWord(_buf[i * 2 + 7], _buf[i * 2 + 8]);
     }
     _writeResponse(6);

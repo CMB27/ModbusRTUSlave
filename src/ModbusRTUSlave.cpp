@@ -267,6 +267,16 @@ void ModbusRTUSlave::_exceptionResponse(uint8_t code) {
   _writeResponse(3);
 }
 
+void ModbusRTUSlave::_clearRxBuffer() {
+  uint32_t startTime = micros();
+  do {
+    if (_serial->available()) {
+      startTime = micros();
+      _serial->read();
+    }
+  } while (micros() - startTime < _frameTimeout);
+}
+
 
 
 void ModbusRTUSlave::_calculateTimeouts(uint32_t baud, uint8_t config) {
@@ -283,18 +293,6 @@ void ModbusRTUSlave::_calculateTimeouts(uint32_t baud, uint8_t config) {
     _frameTimeout = (bitsPerChar * 1000000) / baud + 1750;
   }
 }
-
-void ModbusRTUSlave::_clearRxBuffer() {
-  uint32_t startTime = micros();
-  do {
-    if (_serial->available()) {
-      startTime = micros();
-      _serial->read();
-    }
-  } while (micros() - startTime < _frameTimeout);
-}
-
-
 
 uint16_t ModbusRTUSlave::_crc(uint8_t len) {
   uint16_t value = 0xFFFF;

@@ -50,14 +50,14 @@ class ModbusRTUSlave {
     uint32_t _charTimeout;
     uint32_t _frameTimeout;
 
-    void _processReadCoils();
-    void _processReadDiscreteInputs();
-    void _processReadHoldingRegisters();
-    void _processReadInputRegisters();
-    void _processWriteSingleCoil();
-    void _processWriteSingleHoldingRegister();
-    void _processWriteMultipleCoils();
-    void _processWriteMultipleHoldingRegisters();
+    void _processReadCoils(uint8_t requestLength);
+    void _processReadDiscreteInputs(uint8_t requestLength);
+    void _processReadHoldingRegisters(uint8_t requestLength);
+    void _processReadInputRegisters(uint8_t requestLength);
+    void _processWriteSingleCoil(uint8_t requestLength);
+    void _processWriteSingleHoldingRegister(uint8_t requestLength);
+    void _processWriteMultipleCoils(uint8_t requestLength);
+    void _processWriteMultipleHoldingRegisters(uint8_t requestLength);
 
     uint16_t _readRequest();
     void _writeResponse(uint8_t len);

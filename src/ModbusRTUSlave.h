@@ -59,7 +59,7 @@ class ModbusRTUSlave {
     void _processWriteMultipleCoils();
     void _processWriteMultipleHoldingRegisters();
 
-    bool _readRequest();
+    uint16_t _readRequest();
     void _writeResponse(uint8_t len);
     void _exceptionResponse(uint8_t code);
     void _clearRxBuffer();

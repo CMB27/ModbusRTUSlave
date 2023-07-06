@@ -2,12 +2,12 @@
 
 ModbusRTUSlave::ModbusRTUSlave(HardwareSerial& serial, uint8_t dePin) {
   _hardwareSerial = &serial;
-   #ifdef __AVR__
+  #ifdef __AVR__
   _softwareSerial = 0;
-   #endif
-   #ifdef HAVE_CDCSERIAL
+  #endif
+  #ifdef HAVE_CDCSERIAL
   _usbSerial = 0;
-   #endif
+  #endif
   _serial = &serial;
   _dePin = dePin;
 }
@@ -85,7 +85,7 @@ void ModbusRTUSlave::begin(uint8_t id, uint32_t baud, uint8_t config) {
 
 void ModbusRTUSlave::poll() {
   if (_serial->available()) {
-    if (_readRequest()) {
+    if (_readRequest() >= 8) {
       switch (_buf[1]) {
         case 1:
           _processReadCoils();
@@ -234,7 +234,7 @@ void ModbusRTUSlave::_processWriteMultipleHoldingRegisters() {
 
 
 
-bool ModbusRTUSlave::_readRequest() {
+uint16_t ModbusRTUSlave::_readRequest() {
   uint16_t numBytes = 0;
   uint32_t startTime = 0;
   do {
@@ -245,8 +245,8 @@ bool ModbusRTUSlave::_readRequest() {
     }
   } while (micros() - startTime <= _charTimeout && numBytes < MODBUS_RTU_SLAVE_BUF_SIZE);
   while (micros() - startTime < _frameTimeout);
-  if (!_serial->available() && (_buf[0] == _id || _buf[0] == 0) && _crc(numBytes - 2) == _bytesToWord(_buf[numBytes - 1], _buf[numBytes - 2])) return true;
-  else return false;
+  if (!_serial->available() && (_buf[0] == _id || _buf[0] == 0) && _crc(numBytes - 2) == _bytesToWord(_buf[numBytes - 1], _buf[numBytes - 2])) return numBytes;
+  else return 0;
 }
 
 void ModbusRTUSlave::_writeResponse(uint8_t len) {

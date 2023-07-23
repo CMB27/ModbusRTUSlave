@@ -1,7 +1,6 @@
 #ifndef ModbusRTUSlave_h
 #define ModbusRTUSlave_h
 
-
 #define MODBUS_RTU_SLAVE_BUF_SIZE 256
 #define NO_DE_PIN 255
 #define NO_ID 0

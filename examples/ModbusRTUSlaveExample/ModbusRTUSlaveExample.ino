@@ -1,94 +1,77 @@
 /*
-  ModbusRTUSlave Library - AllTogether
-  
-  This sketch demonstrates how to setup ModbusRTUSlave with 2 coils, 2 discrete inputs, 2 holding registers, and 2 input registers.
-  This sketch requires a Modbus RTU master/client device with an RS232 or UART/USART port.
-  If the port is a RS-232 port, a RS-232 to UART converter will be needed.
-  If the port is UART but the logic levels of the port are different than the logic levels of your Arduino, a logic level converter will be needed.
-  
-  The master/client port will need to be cofigured using the following settings:
-  - Baud Rate: 38400
-  - Data Bits: 8
-  - Parity: None
-  - Stop Bit(s): 1
-  - Slave/Server ID: 1
-  - Coils: 0 and 1
-  - Discrete Inputs: 0 and 1
-  - Holding Registers: 0 and 1
-  - Input Registers: 0 and 1
+  ModbusRTUSlaveExample
+
+  This example demonstrates how to setup and use the ModbusRTUSlave library.
+  It is intended to be used with a second board running ModbusRTUMasterExample from the ModbusRTUMaster library.  
   
   Circuit:
   - A pushbutton switch from pin 2 to GND
   - A pushbutton switch from pin 3 to GND
-  - Piezo speaker from pin 8 to GND
-  - LED from pin 9 to GND with appropriate series resistor
-  - TX of master/client to pin 10
-  - RX of master/client to pin 11
-  - LED from pin 13 to GND with appropriate series resistor (the built in LED will do)
-  - The center pin of a potentiometer to A0 with one end of the potentiometer connected to GND and the other to your Arduino's logic voltage (3.3 or 5V)
-  - The center pin of a potentiometer to A1 with one end of the potentiometer connected to GND and the other to your Arduino's logic voltage (3.3 or 5V)
+  - A LED from pin 5 to GND with a 330 ohm series resistor
+  - A LED from pin 6 to GND with a 330 ohm series resistor
+  - A LED from pin 7 to GND with a 330 ohm series resistor
+  - A LED from pin 8 to GND with a 330 ohm series resistor
+  - The center pin of a potentiometer to pin A0, and the outside pins of the potentiometer to 5V and GND
+  - The center pin of a potentiometer to pin A0, and the outside pins of the potentiometer to 5V and GND
   
-  Created: 2022-11-19
-  By: C. M. Bulliner
-  Modified: 2022-12-17
-  By: C. M. Bulliner
+  !!! If your board's logic voltage is 3.3V, use 3.3V instead of 5V; if in doubt use the IOREF pin !!!
+  
+  - pin 10 to pin 11 of the master/client board
+  - pin 11 to pin 10 of the master/client board
+  - GND to GND of the master/client board
+  
+  A schematic and illustration of the circuit is in the extras folder of the ModbusRTUSlave library.
+  
+  Created: 2023-07-22
+  By: C.M. Bulliner
   
 */
 
 #include <SoftwareSerial.h>
 #include <ModbusRTUSlave.h>
 
-const byte button1Pin = 2;
-const byte button2Pin = 3;
-const byte tonePin = 8;
-const byte pwmPin = 9;
-const byte rxPin = 10;
-const byte txPin = 11;
-const byte ledPin = 13;
-const byte pot1Pin = A0;
-const byte pot2Pin = A1;
+const byte ledPins[4] = {8, 7, 6, 5};
+const byte buttonPins[2] = {3, 2};
+const byte potPins[2] = {A0, A1};
 
-const unsigned int numCoils = 2;
-const unsigned int numDiscreteInputs = 2;
-const unsigned int numHoldingRegisters = 2;
-const unsigned int numInputRegisters = 2;
-
-bool coils[numCoils];
-bool discreteInputs[numDiscreteInputs];
-unsigned int holdingRegisters[numHoldingRegisters];
-unsigned int inputRegisters[numInputRegisters];
+const uint8_t rxPin = 10;
+const uint8_t txPin = 11;
 
 SoftwareSerial mySerial(rxPin, txPin);
 ModbusRTUSlave modbus(mySerial); // serial port, driver enable pin for rs-485 (optional)
 
-void setup() {
-  pinMode(button1Pin, INPUT_PULLUP);
-  pinMode(button2Pin, INPUT_PULLUP);
-  pinMode(pwmPin, OUTPUT);
-  pinMode(tonePin, OUTPUT);
-  pinMode(ledPin, OUTPUT);
-  pinMode(pot1Pin, INPUT);
-  pinMode(pot2Pin, INPUT);
+bool coils[2];
+bool discreteInputs[2];
+uint16_t holdingRegisters[2];
+uint16_t inputRegisters[2];
 
-  modbus.configureCoils(coils, numCoils);
-  modbus.configureDiscreteInputs(discreteInputs, numDiscreteInputs);
-  modbus.configureHoldingRegisters(holdingRegisters, numHoldingRegisters);
-  modbus.configureInputRegisters(inputRegisters, numInputRegisters);
-  modbus.begin(1, 38400); // modbus slave id/address, baud rate, config (optional)
-  
+void setup() {
+  pinMode(ledPins[0], OUTPUT);
+  pinMode(ledPins[1], OUTPUT);
+  pinMode(ledPins[2], OUTPUT);
+  pinMode(ledPins[3], OUTPUT);
+  pinMode(buttonPins[0], INPUT_PULLUP);
+  pinMode(buttonPins[1], INPUT_PULLUP);
+  pinMode(potPins[0], INPUT);
+  pinMode(potPins[1], INPUT);
+
+  modbus.configureCoils(coils, 2);                       // bool array of coil values, number of coils
+  modbus.configureDiscreteInputs(discreteInputs, 2);     // bool array of discrete input values, number of discrete inputs
+  modbus.configureHoldingRegisters(holdingRegisters, 2); // unsigned 16 bit integer array of holding register values, number of holding registers
+  modbus.configureInputRegisters(inputRegisters, 2);     // unsigned 16 bit integer array of input register values, number of input registers
+  modbus.begin(1, 38400);                                // slave id, baud rate, config (optional)
 }
 
 void loop() {
-  discreteInputs[0] = !digitalRead(button1Pin);
-  discreteInputs[1] = !digitalRead(button2Pin);
-  inputRegisters[0] = analogRead(pot1Pin);
-  inputRegisters[1] = analogRead(pot2Pin);
+  discreteInputs[0] = !digitalRead(buttonPins[0]);
+  discreteInputs[1] = !digitalRead(buttonPins[1]);
+  inputRegisters[0] = map(analogRead(potPins[0]), 0, 1023, 0, 255);
+  inputRegisters[1] = map(analogRead(potPins[1]), 0, 1023, 0, 255);
   
   modbus.poll();
-  
-  digitalWrite(ledPin, coils[0]);
-  if (holdingRegisters[0] > 255) analogWrite(pwmPin, 255);
-  else analogWrite(pwmPin, holdingRegisters[0]);
-  if (coils[1] and holdingRegisters[1] > 31) tone(tonePin, holdingRegisters[1]);
-  else noTone(tonePin);
+
+  digitalWrite(ledPins[0], coils[0]);
+  digitalWrite(ledPins[1], coils[1]);
+  analogWrite(ledPins[2], holdingRegisters[0]);
+  analogWrite(ledPins[3], holdingRegisters[1]);
 }

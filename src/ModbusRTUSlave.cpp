@@ -9,6 +9,10 @@ ModbusRTUSlave::ModbusRTUSlave(HardwareSerial& serial, uint8_t dePin) {
   _usbSerial = 0;
   #endif
   _serial = &serial;
+  _coils = 0;
+  _discreteInputs = 0;
+  _holdingRegisters = 0;
+  _inputRegisters = 0;
   _dePin = dePin;
 }
 
@@ -20,6 +24,10 @@ ModbusRTUSlave::ModbusRTUSlave(SoftwareSerial& serial, uint8_t dePin) {
   _usbSerial = 0;
   #endif
   _serial = &serial;
+  _coils = 0;
+  _discreteInputs = 0;
+  _holdingRegisters = 0;
+  _inputRegisters = 0;
   _dePin = dePin;
 }
 #endif
@@ -32,6 +40,10 @@ ModbusRTUSlave::ModbusRTUSlave(Serial_& serial, uint8_t dePin) {
   #endif
   _usbSerial = &serial;
   _serial = &serial;
+  _coils = 0;
+  _discreteInputs = 0;
+  _holdingRegisters = 0;
+  _inputRegisters = 0;
   _dePin = dePin;
 }
 #endif

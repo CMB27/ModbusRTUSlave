@@ -16,8 +16,7 @@ Version 2.x.x of this library is not backward compatible with version 1.x.x. Any
 
 ## Methods
 
-
-### `ModbusRTUSlave()`
+### ModbusRTUSlave()
 
 #### Description
 Creates a ModbusRTUSlave object and sets the serial port to use for data transmission.
@@ -45,7 +44,7 @@ ModbusRTUSlave modbus(Serial, dePin);
 ---
 
 
-### `configureCoils()`
+### configureCoils()
 
 #### Description
 Tells the library where coil data is stored and the number of coils.
@@ -63,7 +62,7 @@ modbus.configureCoils(coils, numCoils)
 ---
 
 
-### `configureDiscreteInputs()`
+### configureDiscreteInputs()
 
 #### Description
 Tells the library where to read discrete input data and the number of discrete inputs.
@@ -82,7 +81,7 @@ modbus.configureDiscreteInputs(discreteInputs, numDiscreteInputs)
 
 
 
-### `configureHoldingRegisters()`
+### configureHoldingRegisters()
 
 #### Description
 Tells the library where holding register data is stored and the number of holding registers.
@@ -100,7 +99,7 @@ modbus.configureHoldingRegisters(holdingRegisters, numHoldingRegisters)
 ---
 
 
-### `configureInputRegisters()`
+### configureInputRegisters()
 
 #### Description
 Tells the library where to read input register data and the number of input registers.
@@ -118,7 +117,7 @@ modbus.configureInputRegisters(inputRegisters, numInputRegisters)
 ---
 
 
-### `begin()`
+### begin()
 
 #### Description
 Sets the slave/server id and the data rate in bits per second (baud) for serial transmission.
@@ -146,7 +145,7 @@ _If using a SoftwareSerial port a configuration of `SERIAL_8N1` will be used reg
 ---
 
 
-### `poll()`
+### poll()
 
 #### Description
 Checks if any Modbus requests are available. If a valid request has been received, an appropriate response will be sent.
@@ -154,7 +153,7 @@ This function must be called frequently.
 
 #### Syntax
 ``` C++
-poll()
+modbus.poll()
 ```
 
 #### Parameters

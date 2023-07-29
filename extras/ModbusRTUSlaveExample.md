@@ -20,4 +20,4 @@ _Image developed using [KiCad](https://www.kicad.org/) and [Inkscape](https://in
 
 
 ## Code
-https://github.com/CMB27/ModbusRTUSlave/blob/732f09ecef0c21b1c47169c8bab79b3fc00b8a21/examples/ModbusRTUSlaveExample/ModbusRTUSlaveExample.ino
+https://github.com/CMB27/ModbusRTUSlave/blob/a24f817b37ecd994556b3993772040c7bfc7619b/examples/ModbusRTUSlaveExample/ModbusRTUSlaveExample.ino#L1C1-L82C2

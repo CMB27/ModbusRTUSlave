@@ -11,7 +11,7 @@ Version 2.x.x of this library is not backward compatible with version 1.x.x. Any
 
 
 ## Example
-- [ModbusRTUSlaveExample](./extras/ModbusRTUSlaveExample.md)
+- [ModbusRTUSlaveExample](https://github.com/CMB27/ModbusRTUSlave/blob/a24f817b37ecd994556b3993772040c7bfc7619b/extras/ModbusRTUSlaveExample.md)
 
 
 ## Methods

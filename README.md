@@ -19,6 +19,10 @@ Version 2.x.x of this library is not backward compatible with version 1.x.x. Any
 
 ### `ModbusRTUSlave()`
 
+#### Description
+Creates a ModbusRTUSlave object and sets the serial port to use for data transmission.
+Optionally sets a driver enable pin. This pin will go `HIGH` when the library is transmitting. This is primarily intended for use with an RS-485 transceiver, but it can also be a handy diagnostic when connected to an LED.
+
 #### Syntax
 ``` C++
 ModbusRTUSlave(serial)
@@ -29,10 +33,23 @@ ModbusRTUSlave(serial, dePin)
 - `serial`: the serial port object to use for Modbus communication.
 - `dePin`: the driver enable pin. This pin is set HIGH when transmitting. If this parameter is set to `NO_DE_PIN`, this feature will be disabled. Default value is `NO_DE_PIN`. Allowed data types `uint8_t` or `byte`.
 
+#### Example
+``` C++
+# include <ModbusRTUSlave.h>
+
+const uint8_t dePin = 13;
+
+ModbusRTUSlave modbus(Serial, dePin);
+```
+
 ---
 
 
 ### `configureCoils()`
+
+#### Description
+Tells the library where coil data is stored and the number of coils.
+If this function is not run, the library will assume there are no coils.
 
 #### Syntax
 ``` C++
@@ -47,6 +64,10 @@ modbus.configureCoils(coils, numCoils)
 
 
 ### `configureDiscreteInputs()`
+
+#### Description
+Tells the library where to read discrete input data and the number of discrete inputs.
+If this function is not run, the library will assume there are no discrete inputs.
 
 #### Syntax
 ``` C++
@@ -63,6 +84,10 @@ modbus.configureDiscreteInputs(discreteInputs, numDiscreteInputs)
 
 ### `configureHoldingRegisters()`
 
+#### Description
+Tells the library where holding register data is stored and the number of holding registers.
+If this function is not run, the library will assume there are no holding registers.
+
 #### Syntax
 ``` C++
 modbus.configureHoldingRegisters(holdingRegisters, numHoldingRegisters)
@@ -77,6 +102,10 @@ modbus.configureHoldingRegisters(holdingRegisters, numHoldingRegisters)
 
 ### `configureInputRegisters()`
 
+#### Description
+Tells the library where to read input register data and the number of input registers.
+If this function is not run, the library will assume there are no input registers.
+
 #### Syntax
 ``` C++
 modbus.configureInputRegisters(inputRegisters, numInputRegisters)
@@ -90,6 +119,10 @@ modbus.configureInputRegisters(inputRegisters, numInputRegisters)
 
 
 ### `begin()`
+
+#### Description
+Sets the slave/server id and the data rate in bits per second (baud) for serial transmission.
+Optionally it also sets the data configuration. Note, there must be 8 data bits for Modbus RTU communication. The default configuration is 8 data bits, no parity, and one stop bit.
 
 #### Syntax
 ``` C++
@@ -115,6 +148,10 @@ _If using a SoftwareSerial port a configuration of `SERIAL_8N1` will be used reg
 
 ### `poll()`
 
+#### Description
+Checks if any Modbus requests are available. If a valid request has been received, an appropriate response will be sent.
+This function must be called frequently.
+
 #### Syntax
 ``` C++
 poll()
@@ -122,3 +159,38 @@ poll()
 
 #### Parameters
 None
+
+#### Example
+``` C++
+# include <ModbusRTUSlave.h>
+
+const uint8_t coilPins[2] = {4, 5};
+const uint8_t discreteInputPins[2] = {2, 3};
+
+ModbusRTUSlave modbus(Serial);
+
+bool coils[2];
+bool discreteInputs[2];
+
+void setup() {
+  pinMode(coilPins[0], OUTPUT);
+  pinMode(coilPins[1], OUTPUT);
+  pinMode(discreteInputPins[0], INPUT);
+  pinMode(discreteInputPins[1], INPUT);
+
+  modbus.configureCoils(coils, 2);
+  modbus.configureDiscreteInputs(discreteInputs, 2);
+  modbus.begin(1, 38400);
+}
+
+void loop() {
+  discreteInputs[0] = digitalRead(discreteInputPins[0]);
+  discreteInputs[1] = digitalRead(discreteInputPins[1]);
+
+  modbus.poll();
+
+  digitalWrite(coilPins[0], coils[0]);
+  digitalWrite(coilPins[1], coils[1]);
+}
+
+```

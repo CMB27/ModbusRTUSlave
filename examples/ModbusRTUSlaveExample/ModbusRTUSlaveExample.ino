@@ -16,14 +16,18 @@
   
   !!! If your board's logic voltage is 3.3V, use 3.3V instead of 5V; if in doubt use the IOREF pin !!!
   
-  - pin 10 to pin 11 of the master/client board
-  - pin 11 to pin 10 of the master/client board
+  - Pin 10 to pin 11 of the master/client board
+  - Pin 11 to pin 10 of the master/client board
   - GND to GND of the master/client board
   
   A schematic and illustration of the circuit is in the extras folder of the ModbusRTUSlave library.
+
+  - Pin 13 is set up as the driver enable pin. This pin will be HIGH whenever the board is transmitting.
   
   Created: 2023-07-22
-  By: C.M. Bulliner
+  By: C. M. Bulliner
+  Modified: 2023-07-29
+  By: C. M. Bulliner
   
 */
 
@@ -36,9 +40,10 @@ const byte potPins[2] = {A0, A1};
 
 const uint8_t rxPin = 10;
 const uint8_t txPin = 11;
+const uint8_t dePin = 13;
 
 SoftwareSerial mySerial(rxPin, txPin);
-ModbusRTUSlave modbus(mySerial); // serial port, driver enable pin for rs-485 (optional)
+ModbusRTUSlave modbus(mySerial, dePin); // serial port, driver enable pin for rs-485 (optional)
 
 bool coils[2];
 bool discreteInputs[2];

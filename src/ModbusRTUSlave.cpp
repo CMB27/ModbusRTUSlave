@@ -187,7 +187,7 @@ void ModbusRTUSlave::_processReadInputRegisters(uint8_t requestLength) {
   if (requestLength != 6) return;
   else if (!_inputRegisters || _numInputRegisters == 0) _exceptionResponse(1);
   else if (quantity == 0 || quantity > 125) _exceptionResponse(3);
-  else if (quantity > _numDiscreteInputs || startAddress > (_numInputRegisters - quantity)) _exceptionResponse(2);
+  else if (quantity > _numInputRegisters || startAddress > (_numInputRegisters - quantity)) _exceptionResponse(2);
   else {
     _buf[2] = quantity * 2;
     for (uint16_t i = 0; i < quantity; i++) {

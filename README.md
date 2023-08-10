@@ -30,7 +30,7 @@ ModbusRTUSlave(serial, dePin)
 
 #### Parameters
 - `serial`: the serial port object to use for Modbus communication.
-- `dePin`: the driver enable pin. This pin is set HIGH when transmitting. If this parameter is set to `NO_DE_PIN`, this feature will be disabled. Default value is `NO_DE_PIN`. Allowed data types `uint8_t` or `byte`.
+- `dePin`: the driver enable pin. This pin is set HIGH when transmitting. If this parameter is set to `NO_DE_PIN`, this feature will be disabled. Default value is `NO_DE_PIN`. Allowed data types: `uint8_t` or `byte`.
 
 #### Example
 ``` C++
@@ -57,7 +57,7 @@ modbus.configureCoils(coils, numCoils)
 
 #### Parameters
 - `coils`: an array of coil values. Allowed data types: array of `bool`.
-- `numCoils`: the number of coils. This value must not be larger than the size of the array. Allowed data types `uint16_t`.
+- `numCoils`: the number of coils. This value must not be larger than the size of the array. Allowed data types: `uint16_t`.
 
 ---
 
@@ -75,7 +75,7 @@ modbus.configureDiscreteInputs(discreteInputs, numDiscreteInputs)
 
 #### Parameters
 - `discreteInputs`: an array of discrete input values. Allowed data types: array of `bool`.
-- `numDiscreteInputs`: the number of discrete inputs. This value must not be larger than the size of the array. Allowed data types `uint16_t`.
+- `numDiscreteInputs`: the number of discrete inputs. This value must not be larger than the size of the array. Allowed data types: `uint16_t`.
 
 ---
 
@@ -94,7 +94,7 @@ modbus.configureHoldingRegisters(holdingRegisters, numHoldingRegisters)
 
 #### Parameters
 - `holdingRegisters`: an array of holding register values. Allowed data types: array of `uint16_t`.
-- `numHoldingRegisters`: the number of holding registers. This value must not be larger than the size of the array. Allowed data types `uint16_t`.
+- `numHoldingRegisters`: the number of holding registers. This value must not be larger than the size of the array. Allowed data types: `uint16_t`.
 
 ---
 
@@ -112,7 +112,7 @@ modbus.configureInputRegisters(inputRegisters, numInputRegisters)
 
 #### Parameters
 - `inputRegisters`: an array of input register values. Allowed data types: array of `uint16_t`.
-- `numInputRegisters`: the number of input registers. This value must not be larger than the size of the array. Allowed data types `uint16_t`.
+- `numInputRegisters`: the number of input registers. This value must not be larger than the size of the array. Allowed data types: `uint16_t`.
 
 ---
 
@@ -130,7 +130,7 @@ modbus.begin(slaveId, baud, config)
 ```
 
 #### Parameters
-- `slaveId`: the number used to itentify this device on the Modbus network. Allowed data types `uint8_t` or `byte`.
+- `slaveId`: the number used to itentify this device on the Modbus network. Allowed data types: `uint8_t` or `byte`.
 - `baud`: the baud rate to use for Modbus communication. Common values are: `1200`, `2400`, `4800`, `9600`, `16200`, `38400`, `57600`, and `115200`. Allowed data types: `uint32_t`.
 - `config`: the serial port configuration to use. Valid values are:  
 `SERIAL_8N1`: no parity (default)  

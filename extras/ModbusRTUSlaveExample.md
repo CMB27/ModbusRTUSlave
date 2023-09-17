@@ -1,5 +1,9 @@
 # ModbusRTUSlave Example Sketch
-This example demonstrates how to setup and use the ModbusRTUSlave library.
+This example demonstrates how to setup and use the ModbusRTUSlave and the [ModbusRTUMaster](https://github.com/CMB27/ModbusRTUMaster) libraries.
+
+For this example to work [ModbusRTUMasterExample](https://github.com/CMB27/ModbusRTUMaster/blob/main/examples/ModbusRTUMasterExample/ModbusRTUMasterExample.ino) needs to be uploaded to one of the Arduino boards and [ModbusRTUSlaveExample](https://github.com/CMB27/ModbusRTUSlave/blob/main/examples/ModbusRTUSlaveExample/ModbusRTUSlaveExample.ino) needs to be uploaded to the other.
+
+If everything works properly, you should be able to control the LEDs connected to one board with the buttons and potentiometers connected to the other.
 
 ## Hardware Required
 - 2 Arduino Boards
@@ -15,7 +19,7 @@ _Image deveolped using [Fritzing](https://fritzing.org/) and [Inkscape](https://
 
 ## Schematic
 ![](./ModbusRTUMasterSlaveExampleSchematic.svg)  
-_Note, this schematic only shows half the circuit._  
+_Note, this schematic only shows half the circuit. The other half is identical._  
 _Image developed using [KiCad](https://www.kicad.org/) and [Inkscape](https://inkscape.org/)._
 
 

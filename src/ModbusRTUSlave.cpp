@@ -68,7 +68,29 @@ void ModbusRTUSlave::configureInputRegisters(uint16_t inputRegisters[], uint16_t
   _numInputRegisters = numInputRegisters;
 }
 
-void ModbusRTUSlave::begin(uint8_t id, uint32_t baud, uint8_t config) {
+#ifdef ESP32
+void ModbusRTUSlave::begin(uint8_t id, unsigned long baud, uint32_t config, int8_t rxPin, int8_t txPin, bool invert) {
+  if (id >= 1 && id <= 247) _id = id;
+  else _id = NO_ID;
+  if (_hardwareSerial) {
+    _calculateTimeouts(baud, config);
+    _hardwareSerial->begin(baud, config, rxPin, txPin, invert);
+  }
+  #ifdef HAVE_CDCSERIAL
+  else if (_usbSerial) {
+    _calculateTimeouts(baud, config);
+    _usbSerial->begin(baud, config);
+    while (!_usbSerial);
+  }
+  #endif
+  if (_dePin != NO_DE_PIN) {
+    pinMode(_dePin, OUTPUT);
+    digitalWrite(_dePin, LOW);
+  }
+  _clearRxBuffer();
+}
+#else
+void ModbusRTUSlave::begin(uint8_t id, unsigned long baud, uint32_t config) {
   if (id >= 1 && id <= 247) _id = id;
   else _id = NO_ID;
   if (_hardwareSerial) {
@@ -92,14 +114,9 @@ void ModbusRTUSlave::begin(uint8_t id, uint32_t baud, uint8_t config) {
     pinMode(_dePin, OUTPUT);
     digitalWrite(_dePin, LOW);
   }
-  uint32_t startTime = micros();
-  do {
-    if (_serial->available()) {
-      startTime = micros();
-      _serial->read();
-    }
-  } while (micros() - startTime < _frameTimeout);
+  _clearRxBuffer();
 }
+#endif
 
 void ModbusRTUSlave::poll() {
   if (_serial->available()) {
@@ -254,7 +271,7 @@ void ModbusRTUSlave::_processWriteMultipleHoldingRegisters() {
 
 bool ModbusRTUSlave::_readRequest() {
   uint16_t numBytes = 0;
-  uint32_t startTime = 0;
+  unsigned long startTime = 0;
   do {
     if (_serial->available()) {
       startTime = micros();
@@ -288,10 +305,20 @@ void ModbusRTUSlave::_exceptionResponse(uint8_t code) {
   _writeResponse(3);
 }
 
+void ModbusRTUSlave::_clearRxBuffer() {
+  unsigned long startTime = micros();
+  do {
+    if (_serial->available()) {
+      startTime = micros();
+      _serial->read();
+    }
+  } while (micros() - startTime < _frameTimeout);
+}
 
 
-void ModbusRTUSlave::_calculateTimeouts(uint32_t baud, uint8_t config) {
-  uint32_t bitsPerChar;
+
+void ModbusRTUSlave::_calculateTimeouts(unsigned long baud, uint32_t config) {
+  unsigned long bitsPerChar;
   if (config == SERIAL_8E2 || config == SERIAL_8O2) bitsPerChar = 12;
   else if (config == SERIAL_8N2 || config == SERIAL_8E1 || config == SERIAL_8O1) bitsPerChar = 11;
   else bitsPerChar = 10;

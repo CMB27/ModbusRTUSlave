@@ -10,6 +10,23 @@ This library will work with HardwareSerial, SoftwareSerial, or Serial_ (USB Seri
 Version 2.x.x of this library is not backward compatible with version 1.x.x. Any sketches that were written to use a 1.x.x version of this library will not work with later versions, at least not without modification.
 
 
+## Compatibility
+This library has been succsessfully tested with the following boards:
+- Arduino Leonardo
+- Arduino Make Your UNO (USB had to be unplugged to work with HardwareSerial)
+- Arduino Mega 2560
+- Arduino Nano
+- Arduino Nano 33 BLE
+- Arduino Nano 33 IoT
+- Arduino Nano ESP32
+- Arduino Nano Every
+- Arduino UNO R3 SMD
+- Arduino UNO R4 (When using RS-485, was able to receive values, but not send them)
+
+Problems were encountered with the following board:
+- Arduino Nano RP2040 Connect (Reliable communication could not be established with the master/client board)
+
+
 ## Example
 - [ModbusRTUSlaveExample](https://github.com/CMB27/ModbusRTUSlave/blob/main/examples/ModbusRTUSlaveExample/ModbusRTUSlaveExample.ino)
 

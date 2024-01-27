@@ -32,8 +32,8 @@
   - A LED from pin 6 to GND with a 1K ohm series resistor
   - A LED from pin 7 to GND with a 1K ohm series resistor
   - A LED from pin 8 to GND with a 1K ohm series resistor
-  - RX pin (pin 0 or pin 10 if using SoftwareSerial) to TX pin of the master/client board
-  - TX pin (pin 1 or pin 11 if using SoftwareSerial) to RX pin of the master/client board
+  - RX pin (typically pin 0 or pin 10 if using SoftwareSerial) to TX pin of the master/client board
+  - TX pin (typically pin 1 or pin 11 if using SoftwareSerial) to RX pin of the master/client board
   - GND to GND of the master/client board
   - Pin 13 is set up as the driver enable pin. This pin will be HIGH whenever the board is transmitting.
 

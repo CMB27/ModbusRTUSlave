@@ -118,7 +118,7 @@ void ModbusRTUSlave::begin(uint8_t id, unsigned long baud, uint32_t config) {
 }
 #endif
 
-uint8_t ModbusRTUSlave::poll() {
+uint8_t ModbusRTUSlave::poll(uint8_t* errCode, uint16_t* startAddress, uint16_t* quantity) {
   uint8_t cmdCode = 0;
   if (_serial->available()) {
     if (_readRequest()) {

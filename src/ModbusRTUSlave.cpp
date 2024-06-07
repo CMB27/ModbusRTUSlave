@@ -125,28 +125,28 @@ uint8_t ModbusRTUSlave::poll(uint8_t* errCode, uint16_t* startAddress, uint16_t*
     if (_readRequest()) {
       cmdCode = _buf[1];
       switch (cmdCode) {
-        case 1:
+        case READ_COIL:
           _processReadCoils(&cmdErrCode, startAddress, quantity);
           break;
-        case 2:
+        case READ_DISCRETE_INPUT:
           _processReadDiscreteInputs(&cmdErrCode, startAddress, quantity);
           break;
-        case 3:
+        case READ_HOLDING_REG:
           _processReadHoldingRegisters(&cmdErrCode, startAddress, quantity);
           break;
-        case 4:
+        case READ_INPUT_REG:
           _processReadInputRegisters(&cmdErrCode, startAddress, quantity);
           break;
-        case 5:
+        case WRITE_SINGLE_COIL:
           _processWriteSingleCoil(&cmdErrCode, startAddress, quantity);
           break;
-        case 6:
+        case WRITE_SINGLE_HOLDING_REG:
           _processWriteSingleHoldingRegister(&cmdErrCode, startAddress, quantity);
           break;
-        case 15:
+        case WRITE_MULTI_COIL:
           _processWriteMultipleCoils(&cmdErrCode, startAddress, quantity);
           break;
-        case 16:
+        case WRITE_MULTI_HOLDING_REG:
           _processWriteMultipleHoldingRegisters(&cmdErrCode, startAddress, quantity);
           break;
         default:

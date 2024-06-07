@@ -167,14 +167,21 @@ _If using a SoftwareSerial port a configuration of `SERIAL_8N1` will be used reg
 #### Description
 Checks if any Modbus requests are available. If a valid request has been received, an appropriate response will be sent.
 This function must be called frequently.
+It will return the command code if command received. Otherwise return 0. return data type: `uint8_t`
+The status of the received command can also be retrieved by passing variable reference to the function.
 
 #### Syntax
 ``` C++
 modbus.poll()
+modbus.poll(&errCode)
+modbus.poll(&errCode, &startAddress)
+modbus.poll(&errCode, &startAddress, &quantity)
 ```
 
 #### Parameters
-None
+- `errCode`: optional argument pass by reference to get the error code return to master if the command has error. Otherwise will be set to 0. Note: the value is valid only command received, i.e., function return is not 0. Allowed data types: `uint8_t`.
+- `startAddress`: optional argument pass by reference to get the register start address of the command. Note: the value is valid only command received, i.e., function return is not 0. Allowed data types: `uint16_t`.
+- `quantity`: optional argument pass by reference to get the number of register the command processed. Allowed data types: `uint16_t`.
 
 #### Example
 ``` C++
@@ -200,10 +207,24 @@ void setup() {
 }
 
 void loop() {
+  uint8_t errCode = 0;
+  uint16_t startAddress = 0;
+  uint16_t quantity = 0;
+
   discreteInputs[0] = digitalRead(discreteInputPins[0]);
   discreteInputs[1] = digitalRead(discreteInputPins[1]);
 
-  modbus.poll();
+  uint8_t cmdReceived = modbus.poll(&errCode, &startAddress, &quantity);
+
+  if (cmdReceived != 0) {   // cmdReceived != 0 means command received from master. errCode, startAddress and quantity can be read now to check the status
+    if (errCode) {
+      // Here means the command has error. you may do some handling like print log or blink LED to acknowledge
+    }
+    else {
+      // the received command processed successfully
+      // use startAddress and quantity for further process if needed
+    }
+  }
 
   digitalWrite(coilPins[0], coils[0]);
   digitalWrite(coilPins[1], coils[1]);

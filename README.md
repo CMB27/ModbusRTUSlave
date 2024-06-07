@@ -231,3 +231,20 @@ void loop() {
 }
 
 ```
+
+
+## Defines
+
+The followings are the defines of the class:
+
+### Commands
+
+- ModbusRTUSlave::READ_COIL = 1,
+- ModbusRTUSlave::READ_DISCRETE_INPUT = 2,
+- ModbusRTUSlave::READ_HOLDING_REG = 3,
+- ModbusRTUSlave::READ_INPUT_REG = 4,
+- ModbusRTUSlave::WRITE_SINGLE_COIL = 5,
+- ModbusRTUSlave::WRITE_SINGLE_HOLDING_REG = 6,
+- ModbusRTUSlave::WRITE_MULTI_COIL = 15,
+- ModbusRTUSlave::WRITE_MULTI_HOLDING_REG = 16,
+

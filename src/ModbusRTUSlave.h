@@ -53,14 +53,14 @@ class ModbusRTUSlave {
     unsigned long _charTimeout;
     unsigned long _frameTimeout;
 
-    void _processReadCoils();
-    void _processReadDiscreteInputs();
-    void _processReadHoldingRegisters();
-    void _processReadInputRegisters();
-    void _processWriteSingleCoil();
-    void _processWriteSingleHoldingRegister();
-    void _processWriteMultipleCoils();
-    void _processWriteMultipleHoldingRegisters();
+    void _processReadCoils(uint8_t* errCode, uint16_t* returnStartAddress, uint16_t* returnQuantity);
+    void _processReadDiscreteInputs(uint8_t* errCode, uint16_t* returnStartAddress, uint16_t* returnQuantity);
+    void _processReadHoldingRegisters(uint8_t* errCode, uint16_t* returnStartAddress, uint16_t* returnQuantity);
+    void _processReadInputRegisters(uint8_t* errCode, uint16_t* returnStartAddress, uint16_t* returnQuantity);
+    void _processWriteSingleCoil(uint8_t* errCode, uint16_t* returnStartAddress, uint16_t* returnQuantity);
+    void _processWriteSingleHoldingRegister(uint8_t* errCode, uint16_t* returnStartAddress, uint16_t* returnQuantity);
+    void _processWriteMultipleCoils(uint8_t* errCode, uint16_t* returnStartAddress, uint16_t* returnQuantity);
+    void _processWriteMultipleHoldingRegisters(uint8_t* errCode, uint16_t* returnStartAddress, uint16_t* returnQuantity);
 
     bool _readRequest();
     void _writeResponse(uint8_t len);

@@ -64,7 +64,7 @@ class ModbusRTUSlave {
 
     bool _readRequest();
     void _writeResponse(uint8_t len);
-    void _exceptionResponse(uint8_t code);
+    uint8_t _exceptionResponse(uint8_t code);
     void _clearRxBuffer();
 
     void _calculateTimeouts(unsigned long baud, uint32_t config);

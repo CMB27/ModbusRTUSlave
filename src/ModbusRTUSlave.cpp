@@ -322,10 +322,11 @@ void ModbusRTUSlave::_writeResponse(uint8_t len) {
   }
 }
 
-void ModbusRTUSlave::_exceptionResponse(uint8_t code) {
+uint8_t ModbusRTUSlave::_exceptionResponse(uint8_t code) {
   _buf[1] |= 0x80;
   _buf[2] = code;
   _writeResponse(3);
+  return code;        // add return to simplify the changes for the code using this function
 }
 
 void ModbusRTUSlave::_clearRxBuffer() {

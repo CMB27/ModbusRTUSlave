@@ -118,10 +118,12 @@ void ModbusRTUSlave::begin(uint8_t id, unsigned long baud, uint32_t config) {
 }
 #endif
 
-void ModbusRTUSlave::poll() {
+uint8_t ModbusRTUSlave::poll() {
+  uint8_t cmdCode = 0;
   if (_serial->available()) {
     if (_readRequest()) {
-      switch (_buf[1]) {
+      cmdCode = _buf[1];
+      switch (cmdCode) {
         case 1:
           _processReadCoils();
           break;
@@ -152,6 +154,7 @@ void ModbusRTUSlave::poll() {
       }
     }
   }
+  return cmdCode;
 }
 
 void ModbusRTUSlave::_processReadCoils() {

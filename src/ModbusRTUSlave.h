@@ -28,7 +28,7 @@ class ModbusRTUSlave {
     #else
     void begin(uint8_t id, unsigned long baud, uint32_t config = SERIAL_8N1);
     #endif
-    void poll();
+    uint8_t poll();
     
   private:
     HardwareSerial *_hardwareSerial;

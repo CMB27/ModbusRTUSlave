@@ -29,6 +29,16 @@ class ModbusRTUSlave {
     void begin(uint8_t id, unsigned long baud, uint32_t config = SERIAL_8N1);
     #endif
     uint8_t poll(uint8_t* errCode = 0, uint16_t* startAddress = 0, uint16_t* quantity = 0);
+    enum {
+      READ_COIL = 1,
+      READ_DISCRETE_INPUT = 2,
+      READ_HOLDING_REG = 3,
+      READ_INPUT_REG = 4,
+      WRITE_SINGLE_COIL = 5,
+      WRITE_SINGLE_HOLDING_REG = 6,
+      WRITE_MULTI_COIL = 15,
+      WRITE_MULTI_HOLDING_REG = 16,
+    };
     
   private:
     HardwareSerial *_hardwareSerial;

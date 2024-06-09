@@ -52,6 +52,9 @@ class ModbusRTUSlave {
     uint8_t _id;
     unsigned long _charTimeout;
     unsigned long _frameTimeout;
+    #ifdef ARDUINO_ARCH_RENESAS
+    unsigned long _flushCompensationDelay;
+    #endif
 
     void _processReadCoils();
     void _processReadDiscreteInputs();

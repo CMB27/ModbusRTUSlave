@@ -292,6 +292,9 @@ void ModbusRTUSlave::_writeResponse(uint8_t len) {
     if (_dePin != NO_DE_PIN) digitalWrite(_dePin, HIGH);
     _serial->write(_buf, len + 2);
     _serial->flush();
+    #ifdef ARDUINO_ARCH_RENESAS
+    delayMicroseconds(_flushCompensationDelay);
+    #endif
     if (_dePin != NO_DE_PIN) digitalWrite(_dePin, LOW);
     while(_serial->available()) {
       _serial->read();
@@ -330,6 +333,9 @@ void ModbusRTUSlave::_calculateTimeouts(unsigned long baud, uint32_t config) {
     _charTimeout = (bitsPerChar * 1000000) / baud + 750;
     _frameTimeout = (bitsPerChar * 1000000) / baud + 1750;
   }
+  #ifdef ARDUINO_ARCH_RENESAS
+  _flushCompensationDelay = (bitsPerChar * 1000000) / baud;
+  #endif
 }
 
 uint16_t ModbusRTUSlave::_crc(uint8_t len) {

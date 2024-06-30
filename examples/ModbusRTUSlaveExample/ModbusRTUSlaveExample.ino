@@ -5,6 +5,7 @@
   It is intended to be used with a second board running ModbusRTUMasterExample from the ModbusRTUMaster library (https://github.com/CMB27/ModbusRTUMaster).
 
   This program has been succsessfully tested with the following boards:
+  - Arduino Giga
   - Arduino Leonardo
   - Arduino Make Your UNO (USB had to be unplugged to work with HardwareSerial)
   - Arduino Mega 2560
@@ -43,7 +44,7 @@
   
   Created: 2023-07-22
   By: C. M. Bulliner
-  Last Modified: 2024-01-27
+  Last Modified: 2024-06-29
   By: C. M. Bulliner
   
 */

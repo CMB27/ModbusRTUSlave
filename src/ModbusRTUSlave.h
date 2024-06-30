@@ -31,28 +31,28 @@ class ModbusRTUSlave {
     void poll();
     
   private:
-    HardwareSerial *_hardwareSerial;
+    HardwareSerial *_hardwareSerial = 0;
     #ifdef __AVR__
-    SoftwareSerial *_softwareSerial;
+    SoftwareSerial *_softwareSerial = 0;
     #endif
     #ifdef HAVE_CDCSERIAL
-    Serial_ *_usbSerial;
+    Serial_ *_usbSerial = 0;
     #endif
     Stream *_serial;
     uint8_t _dePin;
     uint8_t _buf[MODBUS_RTU_SLAVE_BUF_SIZE];
-    bool *_coils;
-    bool *_discreteInputs;
-    uint16_t *_holdingRegisters;
-    uint16_t *_inputRegisters;
+    bool *_coils = 0;
+    bool *_discreteInputs = 0;
+    uint16_t *_holdingRegisters = 0;
+    uint16_t *_inputRegisters = 0;
     uint16_t _numCoils = 0;
     uint16_t _numDiscreteInputs = 0;
     uint16_t _numHoldingRegisters = 0;
     uint16_t _numInputRegisters = 0;
-    uint8_t _id;
+    uint8_t _id = NO_ID;
     unsigned long _charTimeout;
     unsigned long _frameTimeout;
-    #ifdef ARDUINO_ARCH_RENESAS
+    #if defined(ARDUINO_ARCH_RENESAS) || defined(ARDUINO_GIGA)
     unsigned long _flushCompensationDelay;
     #endif
 

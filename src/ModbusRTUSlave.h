@@ -5,6 +5,10 @@
 #define NO_DE_PIN 255
 #define NO_ID 0
 
+#if defined(ARDUINO_ARCH_RENESAS) || defined(ARDUINO_GIGA)
+#define FLUSH_COMPENSATION_DELAY
+#endif
+
 #include "Arduino.h"
 #ifdef __AVR__
 #include <SoftwareSerial.h>
@@ -29,7 +33,7 @@ class ModbusRTUSlave {
     void begin(uint8_t id, unsigned long baud, uint32_t config = SERIAL_8N1);
     #endif
     void poll();
-    
+
   private:
     HardwareSerial *_hardwareSerial = 0;
     #ifdef __AVR__
@@ -52,7 +56,7 @@ class ModbusRTUSlave {
     uint8_t _id = NO_ID;
     unsigned long _charTimeout;
     unsigned long _frameTimeout;
-    #if defined(ARDUINO_ARCH_RENESAS) || defined(ARDUINO_GIGA)
+    #ifdef FLUSH_COMPENSATION_DELAY
     unsigned long _flushCompensationDelay;
     #endif
 

@@ -14,7 +14,6 @@ ModbusRTUSlave::ModbusRTUSlave(HardwareSerial& serial, uint8_t dePin) {
   _holdingRegisters = 0;
   _inputRegisters = 0;
   _dePin = dePin;
-  _respDelay = 0;
 }
 
 #ifdef __AVR__
@@ -30,7 +29,6 @@ ModbusRTUSlave::ModbusRTUSlave(SoftwareSerial& serial, uint8_t dePin) {
   _holdingRegisters = 0;
   _inputRegisters = 0;
   _dePin = dePin;
-  _respDelay = 0;
 }
 #endif
 
@@ -47,7 +45,6 @@ ModbusRTUSlave::ModbusRTUSlave(Serial_& serial, uint8_t dePin) {
   _holdingRegisters = 0;
   _inputRegisters = 0;
   _dePin = dePin;
-  _respDelay = 0;
 }
 #endif
 
@@ -71,8 +68,8 @@ void ModbusRTUSlave::configureInputRegisters(uint16_t inputRegisters[], uint16_t
   _numInputRegisters = numInputRegisters;
 }
 
-void ModbusRTUSlave::configureRespDelay(uint8_t ms) {
-  _respDelay = ms;
+void ModbusRTUSlave::setResponseDelay(unsigned long ms) {
+  _responseDelay = ms;
 }
 
 #ifdef ESP32
@@ -296,7 +293,9 @@ void ModbusRTUSlave::_writeResponse(uint8_t len) {
     uint16_t crc = _crc(len);
     _buf[len] = lowByte(crc);
     _buf[len + 1] = highByte(crc);
-    delay(_respDelay);
+    if (_responseDelay != 0) {
+      delay(_responseDelay);
+    }
     if (_dePin != NO_DE_PIN) digitalWrite(_dePin, HIGH);
     _serial->write(_buf, len + 2);
     _serial->flush();

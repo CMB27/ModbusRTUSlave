@@ -163,6 +163,22 @@ _If using a SoftwareSerial port a configuration of `SERIAL_8N1` will be used reg
 ---
 
 
+### setResponseDelay()
+Sets an optional response delay (in ms) for the slave (default 0).
+If set to a non-zero value, the slave will wait for the specified number of milliseconds before sending the response.
+This may be useful if tight control over the dePin from the master is not possible. Adding a delay will allow the master enough time to stop transmitting and avoid issues with multiple drivers on the the physical pins.
+
+
+#### Syntax
+```C++
+modbus.setResponseDelay(responseDelay)
+```
+
+#### Parameters
+- `responseDelay`: `unsigned long` number of milliseconds to wait before responding to requests.
+
+---
+
 ### poll()
 
 #### Description

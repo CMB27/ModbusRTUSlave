@@ -27,6 +27,7 @@ class ModbusRTUSlave {
     void configureDiscreteInputs(bool discreteInputs[], uint16_t numDiscreteInputs);
     void configureHoldingRegisters(uint16_t holdingRegisters[], uint16_t numHoldingRegisters);
     void configureInputRegisters(uint16_t inputRegisters[], uint16_t numInputRegisters);
+    void setResponseDelay(unsigned long ms);
     #ifdef ESP32
     void begin(uint8_t id, unsigned long baud, uint32_t config = SERIAL_8N1, int8_t rxPin = -1, int8_t txPin = -1, bool invert = false);
     #else
@@ -56,6 +57,8 @@ class ModbusRTUSlave {
     uint8_t _id = NO_ID;
     unsigned long _charTimeout;
     unsigned long _frameTimeout;
+    unsigned long _responseDelay = 0;
+
     #ifdef FLUSH_COMPENSATION_DELAY
     unsigned long _flushCompensationDelay;
     #endif

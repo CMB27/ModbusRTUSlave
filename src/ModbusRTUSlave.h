@@ -5,6 +5,10 @@
 #define NO_DE_PIN 255
 #define NO_ID 0
 
+#if defined(ARDUINO_ARCH_RENESAS) || defined(ARDUINO_GIGA)
+#define FLUSH_COMPENSATION_DELAY
+#endif
+
 #include "Arduino.h"
 #ifdef __AVR__
 #include <SoftwareSerial.h>
@@ -30,30 +34,34 @@ class ModbusRTUSlave {
     void begin(uint8_t id, unsigned long baud, uint32_t config = SERIAL_8N1);
     #endif
     void poll();
-    
+
   private:
-    HardwareSerial *_hardwareSerial;
+    HardwareSerial *_hardwareSerial = 0;
     #ifdef __AVR__
-    SoftwareSerial *_softwareSerial;
+    SoftwareSerial *_softwareSerial = 0;
     #endif
     #ifdef HAVE_CDCSERIAL
-    Serial_ *_usbSerial;
+    Serial_ *_usbSerial = 0;
     #endif
     Stream *_serial;
     uint8_t _dePin;
     uint8_t _buf[MODBUS_RTU_SLAVE_BUF_SIZE];
-    bool *_coils;
-    bool *_discreteInputs;
-    uint16_t *_holdingRegisters;
-    uint16_t *_inputRegisters;
+    bool *_coils = 0;
+    bool *_discreteInputs = 0;
+    uint16_t *_holdingRegisters = 0;
+    uint16_t *_inputRegisters = 0;
     uint16_t _numCoils = 0;
     uint16_t _numDiscreteInputs = 0;
     uint16_t _numHoldingRegisters = 0;
     uint16_t _numInputRegisters = 0;
-    uint8_t _id;
+    uint8_t _id = NO_ID;
     unsigned long _charTimeout;
     unsigned long _frameTimeout;
     unsigned long _responseDelay = 0;
+
+    #ifdef FLUSH_COMPENSATION_DELAY
+    unsigned long _flushCompensationDelay;
+    #endif
 
     void _processReadCoils();
     void _processReadDiscreteInputs();

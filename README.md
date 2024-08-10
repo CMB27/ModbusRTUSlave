@@ -20,11 +20,12 @@ This library has been succsessfully tested with the following boards:
 - Arduino Nano 33 IoT
 - Arduino Nano ESP32
 - Arduino Nano Every
+- Arduino Nano RP2040 Connect - Using Earle F. Philhower's arduino-pico core
 - Arduino UNO R3 SMD
-- Arduino UNO R4 (When using RS-485, was able to receive values, but not send them)
+- Arduino UNO R4
 
 Problems were encountered with the following board:
-- Arduino Nano RP2040 Connect (Reliable communication could not be established with the master/client board)
+- Arduino Nano RP2040 Connect - Using Arduino's ArduinoCore-mbed (Reliable communication could not be established with the master/client board)
 
 
 ## Example

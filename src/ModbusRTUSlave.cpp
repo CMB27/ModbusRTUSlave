@@ -2,48 +2,22 @@
 
 ModbusRTUSlave::ModbusRTUSlave(HardwareSerial& serial, uint8_t dePin) {
   _hardwareSerial = &serial;
-  #ifdef __AVR__
-  _softwareSerial = 0;
-  #endif
-  #ifdef HAVE_CDCSERIAL
-  _usbSerial = 0;
-  #endif
   _serial = &serial;
-  _coils = 0;
-  _discreteInputs = 0;
-  _holdingRegisters = 0;
-  _inputRegisters = 0;
   _dePin = dePin;
 }
 
 #ifdef __AVR__
 ModbusRTUSlave::ModbusRTUSlave(SoftwareSerial& serial, uint8_t dePin) {
-  _hardwareSerial = 0;
   _softwareSerial = &serial;
-  #ifdef HAVE_CDCSERIAL
-  _usbSerial = 0;
-  #endif
   _serial = &serial;
-  _coils = 0;
-  _discreteInputs = 0;
-  _holdingRegisters = 0;
-  _inputRegisters = 0;
   _dePin = dePin;
 }
 #endif
 
 #ifdef HAVE_CDCSERIAL
 ModbusRTUSlave::ModbusRTUSlave(Serial_& serial, uint8_t dePin) {
-  _hardwareSerial = 0;
-  #ifdef __AVR__
-  _softwareSerial = 0;
-  #endif
   _usbSerial = &serial;
   _serial = &serial;
-  _coils = 0;
-  _discreteInputs = 0;
-  _holdingRegisters = 0;
-  _inputRegisters = 0;
   _dePin = dePin;
 }
 #endif
@@ -96,7 +70,6 @@ void ModbusRTUSlave::begin(uint8_t id, unsigned long baud, uint32_t config, int8
 #else
 void ModbusRTUSlave::begin(uint8_t id, unsigned long baud, uint32_t config) {
   if (id >= 1 && id <= 247) _id = id;
-  else _id = NO_ID;
   if (_hardwareSerial) {
     _calculateTimeouts(baud, config);
     _hardwareSerial->begin(baud, config);
@@ -299,6 +272,9 @@ void ModbusRTUSlave::_writeResponse(uint8_t len) {
     if (_dePin != NO_DE_PIN) digitalWrite(_dePin, HIGH);
     _serial->write(_buf, len + 2);
     _serial->flush();
+    #ifdef FLUSH_COMPENSATION_DELAY
+    delayMicroseconds(_flushCompensationDelay);
+    #endif
     if (_dePin != NO_DE_PIN) digitalWrite(_dePin, LOW);
     while(_serial->available()) {
       _serial->read();
@@ -337,6 +313,9 @@ void ModbusRTUSlave::_calculateTimeouts(unsigned long baud, uint32_t config) {
     _charTimeout = (bitsPerChar * 1000000) / baud + 750;
     _frameTimeout = (bitsPerChar * 1000000) / baud + 1750;
   }
+  #ifdef FLUSH_COMPENSATION_DELAY
+  _flushCompensationDelay = ((bitsPerChar * 1000000) / baud) + 2;
+  #endif
 }
 
 uint16_t ModbusRTUSlave::_crc(uint8_t len) {

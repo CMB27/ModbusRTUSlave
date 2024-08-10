@@ -5,6 +5,7 @@
   It is intended to be used with a second board running ModbusRTUMasterExample from the ModbusRTUMaster library (https://github.com/CMB27/ModbusRTUMaster).
 
   This program has been succsessfully tested with the following boards:
+  - Arduino Giga
   - Arduino Leonardo
   - Arduino Make Your UNO (USB had to be unplugged to work with HardwareSerial)
   - Arduino Mega 2560
@@ -13,11 +14,12 @@
   - Arduino Nano 33 IoT
   - Arduino Nano ESP32
   - Arduino Nano Every
+  - Arduino Nano RP2040 Connect - Using Earle F. Philhower's arduino-pico core
   - Arduino UNO R3 SMD
-  - Arduino UNO R4 (When using RS-485, was able to receive values, but not send them)
+  - Arduino UNO R4
 
   Problems were encountered with the following board:
-  - Arduino Nano RP2040 Connect (Reliable communication could not be established with the master/client board)
+  - Arduino Nano RP2040 Connect - Using Arduino's ArduinoCore-mbed (Reliable communication could not be established with the master/client board)
 
   !WARNING
   When connecting boards using UART, as described in the circuit below, the logic level voltages must match (5V or 3.3V).
@@ -42,7 +44,7 @@
   
   Created: 2023-07-22
   By: C. M. Bulliner
-  Last Modified: 2024-01-27
+  Last Modified: 2024-06-29
   By: C. M. Bulliner
   
 */
@@ -59,9 +61,15 @@
 #include <ModbusRTUSlave.h>
 
 const byte potPins[2] = {A0, A1};
+#if defined ESP32 || (defined ARDUINO_NANO_RP2040_CONNECT && !defined ARDUINO_ARCH_MBED)
+const byte buttonPins[2] = {D2, D3};
+const byte ledPins[4] = {D5, D6, D7, D8};
+const byte dePin = D13;
+#else
 const byte buttonPins[2] = {2, 3};
 const byte ledPins[4] = {5, 6, 7, 8};
 const byte dePin = 13;
+#endif
 
 #if defined USE_SOFTWARE_SERIAL
   const byte rxPin = 10;

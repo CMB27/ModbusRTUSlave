@@ -1,24 +1,23 @@
 #include "ModbusRTUSlave.h"
 
-ModbusRTUSlave::ModbusRTUSlave(HardwareSerial& serial, uint8_t dePin) {
-  _hardwareSerial = &serial;
+ModbusRTUSlave::ModbusRTUSlave(Stream& serial, uint8_t dePin) {
   _serial = &serial;
   _dePin = dePin;
 }
 
+ModbusRTUSlave::ModbusRTUSlave(HardwareSerial& serial, uint8_t dePin): ModbusRTUSlave((Stream&)serial, dePin) {
+  _hardwareSerial = &serial;
+}
+
 #ifdef __AVR__
-ModbusRTUSlave::ModbusRTUSlave(SoftwareSerial& serial, uint8_t dePin) {
+ModbusRTUSlave::ModbusRTUSlave(SoftwareSerial& serial, uint8_t dePin): ModbusRTUSlave((Stream&)serial, dePin) {
   _softwareSerial = &serial;
-  _serial = &serial;
-  _dePin = dePin;
 }
 #endif
 
 #ifdef HAVE_CDCSERIAL
-ModbusRTUSlave::ModbusRTUSlave(Serial_& serial, uint8_t dePin) {
+ModbusRTUSlave::ModbusRTUSlave(Serial_& serial, uint8_t dePin): ModbusRTUSlave((Stream&)serial, dePin) {
   _usbSerial = &serial;
-  _serial = &serial;
-  _dePin = dePin;
 }
 #endif
 

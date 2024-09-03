@@ -16,6 +16,7 @@
 
 class ModbusRTUSlave {
   public:
+    ModbusRTUSlave(Stream& serial, uint8_t dePin = NO_DE_PIN);
     ModbusRTUSlave(HardwareSerial& serial, uint8_t dePin = NO_DE_PIN);
     #ifdef __AVR__
     ModbusRTUSlave(SoftwareSerial& serial, uint8_t dePin = NO_DE_PIN);

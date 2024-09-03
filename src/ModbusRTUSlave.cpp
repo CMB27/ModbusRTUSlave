@@ -95,9 +95,12 @@ void ModbusRTUSlave::begin(uint8_t id, unsigned long baud, uint32_t config) {
 }
 #endif
 
-void ModbusRTUSlave::poll() {
+bool ModbusRTUSlave::poll() {
+  static bool requestOccurred = false; //one-time declaration
+  requestOccurred = false; //assume no request at first
   if (_serial->available()) {
     if (_readRequest()) {
+      requestOccurred = true; //mark that request occurred
       switch (_buf[1]) {
         case 1:
           _processReadCoils();
@@ -129,6 +132,7 @@ void ModbusRTUSlave::poll() {
       }
     }
   }
+  return requestOccurred; 
 }
 
 void ModbusRTUSlave::_processReadCoils() {

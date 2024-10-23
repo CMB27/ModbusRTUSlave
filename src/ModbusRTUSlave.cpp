@@ -1,6 +1,6 @@
 #include "ModbusRTUSlave.h"
 
-ModbusRTUSlave::ModbusRTUSlave(Stream& serial, int8_t dePin, int8_t rePin) : _rtuComm(serial, dePin, rePin, 0) {
+ModbusRTUSlave::ModbusRTUSlave(Stream& serial, int8_t dePin, int8_t rePin) : _rtuComm(serial, dePin, rePin) {
   
 }
 
@@ -28,251 +28,147 @@ void ModbusRTUSlave::setResponseDelay(unsigned long responseDelay) {
   _responseDelay = responseDelay;
 }
 
-void ModbusRTUSlave::begin(uint8_t unitId, unsigned long baud, uint32_t config, unsigned long preDelay; unsigned long postDelay) {
+void ModbusRTUSlave::begin(uint8_t unitId, unsigned long baud, uint32_t config) {
   if (unitId >= 1 && unitId <= 247) _unitId = unitId;
-  _rtuComm.begin(baud, config, preDelay, postDelay);
+  _rtuComm.begin(baud, config);
 }
 
 void ModbusRTUSlave::poll() {
-  if (_serial->available()) {
-    if (_readRequest()) {
-      switch (_buf[1]) {
-        case 1:
-          _processReadCoils();
-          break;
-        case 2:
-          _processReadDiscreteInputs();
-          break;
-        case 3:
-          _processReadHoldingRegisters();
-          break;
-        case 4:
-          _processReadInputRegisters();
-          break;
-        case 5:
-          _processWriteSingleCoil();
-          break;
-        case 6:
-          _processWriteSingleHoldingRegister();
-          break;
-        case 15:
-          _processWriteMultipleCoils();
-          break;
-        case 16:
-          _processWriteMultipleHoldingRegisters();
-          break;
-        default:
-          _exceptionResponse(1);
-          break;
-      }
-    }
+  ModbusADU adu;
+  uint8_t error = _rtuComm.readAdu(adu);
+  if (error) return;
+  if (adu.getUnitId() != _unitId && adu.getUnitId() != 0) return;
+  switch (adu.getFunctionCode()) {
+    case 1:
+      _processReadCoils(adu);
+      break;
+    case 2:
+      _processReadDiscreteInputs(adu);
+      break;
+    case 3:
+      _processReadHoldingRegisters(adu);
+      break;
+    case 4:
+      _processReadInputRegisters(adu);
+      break;
+    case 5:
+      _processWriteSingleCoil(adu);
+      break;
+    case 6:
+      _processWriteSingleHoldingRegister(adu);
+      break;
+    case 15:
+      _processWriteMultipleCoils(adu);
+      break;
+    case 16:
+      _processWriteMultipleHoldingRegisters(adu);
+      break;
+    default:
+      adu.prepareExceptionResponse(1);
+      break;
+  }
+  if (adu.getUnitId() != 0) {
+    delay(_responseDelay);
+    _rtuComm.writeAdu(adu);
   }
 }
 
-void ModbusRTUSlave::_processReadCoils() {
-  uint16_t startAddress = _bytesToWord(_buf[2], _buf[3]);
-  uint16_t quantity = _bytesToWord(_buf[4], _buf[5]);
-  if (!_coils || _numCoils == 0) _exceptionResponse(1);
-  else if (quantity == 0 || quantity > 2000) _exceptionResponse(3);
-  else if (quantity > _numCoils || startAddress > (_numCoils - quantity)) _exceptionResponse(2);
-  else {
-    _buf[2] = _div8RndUp(quantity);
-    for (uint16_t i = 0; i < quantity; i++) {
-      bitWrite(_buf[3 + (i >> 3)], i & 7, _coils[startAddress + i]);
-    }
-    _writeResponse(3 + _buf[2]);
-  }
+void ModbusRTUSlave::_processReadCoils(ModbusADU& adu) {
+  _processReadValues(adu, _coils, _numCoils);
 }
 
-void ModbusRTUSlave::_processReadDiscreteInputs() {
-  uint16_t startAddress = _bytesToWord(_buf[2], _buf[3]);
-  uint16_t quantity = _bytesToWord(_buf[4], _buf[5]);
-  if (!_discreteInputs || _numDiscreteInputs == 0) _exceptionResponse(1);
-  else if (quantity == 0 || quantity > 2000) _exceptionResponse(3);
-  else if (quantity > _numDiscreteInputs || startAddress > (_numDiscreteInputs - quantity)) _exceptionResponse(2);
-  else {
-    _buf[2] = _div8RndUp(quantity);
-    for (uint16_t i = 0; i < quantity; i++) {
-      bitWrite(_buf[3 + (i >> 3)], i & 7, _discreteInputs[startAddress + i]);
-    }
-    _writeResponse(3 + _buf[2]);
-  }
+void ModbusRTUSlave::_processReadDiscreteInputs(ModbusADU& adu) {
+  _processReadValues(adu, _discreteInputs, _numDiscreteInputs);
 }
 
-void ModbusRTUSlave::_processReadHoldingRegisters() {
-  uint16_t startAddress = _bytesToWord(_buf[2], _buf[3]);
-  uint16_t quantity = _bytesToWord(_buf[4], _buf[5]);
-  if (!_holdingRegisters || _numHoldingRegisters == 0) _exceptionResponse(1);
-  else if (quantity == 0 || quantity > 125) _exceptionResponse(3);
-  else if (quantity > _numHoldingRegisters || startAddress > (_numHoldingRegisters - quantity)) _exceptionResponse(2);
-  else {
-    _buf[2] = quantity * 2;
-    for (uint16_t i = 0; i < quantity; i++) {
-      _buf[3 + (i * 2)] = highByte(_holdingRegisters[startAddress + i]);
-      _buf[4 + (i * 2)] = lowByte(_holdingRegisters[startAddress + i]);
-    }
-    _writeResponse(3 + _buf[2]);
-  }
+void ModbusRTUSlave::_processReadHoldingRegisters(ModbusADU& adu) {
+  _processReadValues(adu, _holdingRegisters, _numHoldingRegisters);
 }
 
-void ModbusRTUSlave::_processReadInputRegisters() {
-  uint16_t startAddress = _bytesToWord(_buf[2], _buf[3]);
-  uint16_t quantity = _bytesToWord(_buf[4], _buf[5]);
-  if (!_inputRegisters || _numInputRegisters == 0) _exceptionResponse(1);
-  else if (quantity == 0 || quantity > 125) _exceptionResponse(3);
-  else if (quantity > _numInputRegisters || startAddress > (_numInputRegisters - quantity)) _exceptionResponse(2);
-  else {
-    _buf[2] = quantity * 2;
-    for (uint16_t i = 0; i < quantity; i++) {
-      _buf[3 + (i * 2)] = highByte(_inputRegisters[startAddress + i]);
-      _buf[4 + (i * 2)] = lowByte(_inputRegisters[startAddress + i]);
-    }
-    _writeResponse(3 + _buf[2]);
-  }
+void ModbusRTUSlave::_processReadInputRegisters(ModbusADU& adu) {
+  _processReadValues(adu, _inputRegisters, _numInputRegisters);
 }
 
-void ModbusRTUSlave::_processWriteSingleCoil() {
-  uint16_t address = _bytesToWord(_buf[2], _buf[3]);
-  uint16_t value = _bytesToWord(_buf[4], _buf[5]);
-  if (!_coils ||_numCoils == 0) _exceptionResponse(1);
-  else if (value != 0 && value != 0xFF00) _exceptionResponse(3);
-  else if (address >= _numCoils) _exceptionResponse(2);
-  else {
-    _coils[address] = value;
-    _writeResponse(6);
-  }
+void ModbusRTUSlave::_processWriteSingleCoil(ModbusADU& adu) {
+  uint16_t address = adu.getDataRegister(0);
+  uint16_t value = adu.getDataRegister(2);
+  if (!_coils ||_numCoils == 0) adu.prepareExceptionResponse(1);
+  else if (value != 0 && value != 0xFF00) adu.prepareExceptionResponse(3);
+  else if (address >= _numCoils) adu.prepareExceptionResponse(2);
+  else _coils[address] = value;
 }
 
-void ModbusRTUSlave::_processWriteSingleHoldingRegister() {
-  uint16_t address = _bytesToWord(_buf[2], _buf[3]);
-  uint16_t value = _bytesToWord(_buf[4], _buf[5]);
-  if (!_holdingRegisters || _numHoldingRegisters == 0) _exceptionResponse(1);
-  else if (address >= _numHoldingRegisters) _exceptionResponse(2);
-  else {
-    _holdingRegisters[address] = value;
-    _writeResponse(6);
-  }
+void ModbusRTUSlave::_processWriteSingleHoldingRegister(ModbusADU& adu) {
+  uint16_t address = adu.getDataRegister(0);
+  uint16_t value = adu.getDataRegister(2);
+  if (!_holdingRegisters || _numHoldingRegisters == 0) adu.prepareExceptionResponse(1);
+  else if (address >= _numHoldingRegisters) adu.prepareExceptionResponse(2);
+  else _holdingRegisters[address] = value;
 }
 
-void ModbusRTUSlave::_processWriteMultipleCoils() {
-  uint16_t startAddress = _bytesToWord(_buf[2], _buf[3]);
-  uint16_t quantity = _bytesToWord(_buf[4], _buf[5]);
-  if (!_coils || _numCoils == 0) _exceptionResponse(1);
-  else if (quantity == 0 || quantity > 1968 || _buf[6] != _div8RndUp(quantity)) _exceptionResponse(3);
-  else if (quantity > _numCoils || startAddress > (_numCoils - quantity)) _exceptionResponse(2);
+void ModbusRTUSlave::_processWriteMultipleCoils(ModbusADU& adu) {
+  uint16_t startAddress = adu.getDataRegister(0);
+  uint16_t quantity = adu.getDataRegister(2);
+  if (!_coils || _numCoils == 0) adu.prepareExceptionResponse(1);
+  else if (quantity == 0 || quantity > 1968 || adu.data[4] != div8RndUp(quantity)) adu.prepareExceptionResponse(3);
+  else if (quantity > _numCoils || startAddress > (_numCoils - quantity)) adu.prepareExceptionResponse(2);
   else {
     for (uint16_t i = 0; i < quantity; i++) {
-      _coils[startAddress + i] = bitRead(_buf[7 + (i >> 3)], i & 7);
+      _coils[startAddress + i] = bitRead(adu.data[5 + (i / 8)], i % 8);
     }
-    _writeResponse(6);
+    adu.setDataLen(4);
   }
 }
 
-void ModbusRTUSlave::_processWriteMultipleHoldingRegisters() {
-  uint16_t startAddress = _bytesToWord(_buf[2], _buf[3]);
-  uint16_t quantity = _bytesToWord(_buf[4], _buf[5]);
-  if (!_holdingRegisters || _numHoldingRegisters == 0) _exceptionResponse(1);
-  else if (quantity == 0 || quantity > 123 || _buf[6] != (quantity * 2)) _exceptionResponse(3);
-  else if (quantity > _numHoldingRegisters || startAddress > (_numHoldingRegisters - quantity)) _exceptionResponse(2);
+void ModbusRTUSlave::_processWriteMultipleHoldingRegisters(ModbusADU& adu) {
+  uint16_t startAddress = adu.getDataRegister(0);
+  uint16_t quantity = adu.getDataRegister(2);
+  if (!_holdingRegisters || _numHoldingRegisters == 0) adu.prepareExceptionResponse(1);
+  else if (quantity == 0 || quantity > 123 || adu.data[4] != (quantity * 2)) adu.prepareExceptionResponse(3);
+  else if (quantity > _numHoldingRegisters || startAddress > (_numHoldingRegisters - quantity)) adu.prepareExceptionResponse(2);
   else {
     for (uint16_t i = 0; i < quantity; i++) {
-      _holdingRegisters[startAddress + i] = _bytesToWord(_buf[i * 2 + 7], _buf[i * 2 + 8]);
+      _holdingRegisters[startAddress + i] = adu.getDataRegister(5 + (i * 2));
     }
-    _writeResponse(6);
+    adu.setDataLen(4);
   }
 }
 
 
 
-bool ModbusRTUSlave::_readRequest() {
-  uint16_t numBytes = 0;
-  unsigned long startTime = 0;
-  do {
-    if (_serial->available()) {
-      startTime = micros();
-      _buf[numBytes] = _serial->read();
-      numBytes++;
-    }
-  } while (micros() - startTime <= _charTimeout && numBytes < MODBUS_RTU_SLAVE_BUF_SIZE);
-  while (micros() - startTime < _frameTimeout);
-  if (!_serial->available() && (_buf[0] == _id || _buf[0] == 0) && _crc(numBytes - 2) == _bytesToWord(_buf[numBytes - 1], _buf[numBytes - 2])) return true;
-  else return false;
-}
-
-void ModbusRTUSlave::_writeResponse(uint8_t len) {
-  if (_buf[0] != 0) {
-    uint16_t crc = _crc(len);
-    _buf[len] = lowByte(crc);
-    _buf[len + 1] = highByte(crc);
-    if (_responseDelay != 0) {
-      delay(_responseDelay);
-    }
-    if (_dePin != NO_DE_PIN) digitalWrite(_dePin, HIGH);
-    _serial->write(_buf, len + 2);
-    _serial->flush();
-    #ifdef FLUSH_COMPENSATION_DELAY
-    delayMicroseconds(_flushCompensationDelay);
-    #endif
-    if (_dePin != NO_DE_PIN) digitalWrite(_dePin, LOW);
-    while(_serial->available()) {
-      _serial->read();
-    }
-  }
-}
-
-void ModbusRTUSlave::_exceptionResponse(uint8_t code) {
-  _buf[1] |= 0x80;
-  _buf[2] = code;
-  _writeResponse(3);
-}
-
-void ModbusRTUSlave::_clearRxBuffer() {
-  unsigned long startTime = micros();
-  do {
-    if (_serial->available()) {
-      startTime = micros();
-      _serial->read();
-    }
-  } while (micros() - startTime < _frameTimeout);
-}
-
-
-
-void ModbusRTUSlave::_calculateTimeouts(unsigned long baud, uint32_t config) {
-  unsigned long bitsPerChar;
-  if (config == SERIAL_8E2 || config == SERIAL_8O2) bitsPerChar = 12;
-  else if (config == SERIAL_8N2 || config == SERIAL_8E1 || config == SERIAL_8O1) bitsPerChar = 11;
-  else bitsPerChar = 10;
-  if (baud <= 19200) {
-    _charTimeout = (bitsPerChar * 2500000) / baud;
-    _frameTimeout = (bitsPerChar * 4500000) / baud;
-  }
+void ModbusRTUSlave::_processReadValues(ModbusADU& adu, bool buf[], uint16_t bufSize) {
+  if (adu.getUnitId == 0) return;
+  uint16_t startAddress = adu.getDataRegister(0);
+  uint16_t quantity = adu.getDataRegister(2);
+  if (!buf || bufSize == 0) adu.prepareExceptionResponse(1);
+  else if (quantity == 0 || quantity > 2000) adu.prepareExceptionResponse(3);
+  else if (quantity > bufSize || startAddress > (bufSize - quantity)) adu.prepareExceptionResponse(2);
   else {
-    _charTimeout = (bitsPerChar * 1000000) / baud + 750;
-    _frameTimeout = (bitsPerChar * 1000000) / baud + 1750;
-  }
-  #ifdef FLUSH_COMPENSATION_DELAY
-  _flushCompensationDelay = ((bitsPerChar * 1000000) / baud) + 2;
-  #endif
-}
-
-uint16_t ModbusRTUSlave::_crc(uint8_t len) {
-  uint16_t value = 0xFFFF;
-  for (uint8_t i = 0; i < len; i++) {
-    value ^= (uint16_t)_buf[i];
-    for (uint8_t j = 0; j < 8; j++) {
-      bool lsb = value & 1;
-      value >>= 1;
-      if (lsb) value ^= 0xA001;
+    uint8_t byteCount = div8RndUp(quantity);
+    adu.data[0] = byteCount;
+    for (uint16_t i = 0; i < (byteCount * 8); i++) {
+      uint8_t byteIndex = 1 + (i / 8);
+      uint8_t bitIndex = i % 8;
+      if (i < quantity) bitWrite(adu.data[byteIndex], bitIndex, buf[startAddress + i]);
+      else bitClear(adu.data[byteIndex], bitIndex);
     }
+    adu.setDataLen(1 + byteCount);
   }
-  return value;
 }
 
-uint16_t ModbusRTUSlave::_div8RndUp(uint16_t value) {
-  return (value + 7) >> 3;
-}
-
-uint16_t ModbusRTUSlave::_bytesToWord(uint8_t high, uint8_t low) {
-  return (high << 8) | low;
+void ModbusRTUSlave::_processReadValues(ModbusADU& adu, uint16_t buf[], uint16_t bufSize) {
+  if (adu.getUnitId == 0) return;
+  uint16_t startAddress = adu.getDataRegister(0);
+  uint16_t quantity = adu.getDataRegister(2);
+  if (!buf || bufSize == 0) adu.prepareExceptionResponse(1);
+  else if (quantity == 0 || quantity > 125) adu.prepareExceptionResponse(3);
+  else if (quantity > bufSize || startAddress > (bufSize - quantity)) adu.prepareExceptionResponse(2);
+  else {
+    uint8_t byteCount = quantity * 2;
+    adu.data[0] = byteCount;
+    for (uint16_t i = 0; i < quantity; i++) {
+      adu.setDataRegister(1 + (i * 2), buf[startAddress + i]);
+    }
+    adu.setDataLen(1 + byteCount);
+  }
 }

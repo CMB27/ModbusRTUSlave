@@ -17,21 +17,40 @@ Version 2.x.x of this library is not backward compatible with version 1.x.x. Any
 
 
 ## Compatibility
-This library has been succsessfully tested with the following boards:
-- Arduino Leonardo
-- Arduino Make Your UNO (USB had to be unplugged to work with HardwareSerial)
-- Arduino Mega 2560
-- Arduino Nano
-- Arduino Nano 33 BLE
-- Arduino Nano 33 IoT
-- Arduino Nano ESP32
-- Arduino Nano Every
-- Arduino Nano RP2040 Connect - Using Earle F. Philhower's arduino-pico core
-- Arduino UNO R3 SMD
-- Arduino UNO R4
+This library has been tested with the following boards and cores:
 
-Problems were encountered with the following board:
-- Arduino Nano RP2040 Connect - Using Arduino's ArduinoCore-mbed (Reliable communication could not be established with the master/client board)
+| Board Name                  | Core                                                                 | Works    |
+| :-------------------------- | :------------------------------------------------------------------- | :------: |
+| Arduino Due                 | **Arduino SAM Boards (32-bits ARM Cortex-M3)** by Arduino `1.6.12`   | Yes      |
+| Arduino Giga                | **Arduino Mbed OS GIGA Boards** by Arduino `4.1.5`                   | Yes      |
+| Arduino Leonardo            | **Arduino AVR Boards** by Arduino `1.8.6`                            | Yes      |
+| Arduino Make Your UNO       | **Arduino AVR Boards** by Arduino `1.8.6`                            | Yes [^1] |
+| Arduino Mega 2560           | **Arduino AVR Boards** by Arduino `1.8.6`                            | Yes      |
+| Arduino Nano                | **Arduino AVR Boards** by Arduino `1.8.6`                            | Yes      |
+| Arduino Nano 33 BLE         | **Arduino Mbed OS Nano Boards** by Arduino `4.1.5`                   | Yes      |
+| Arduino Nano 33 IoT         | **Arduino SAMD Boards (32-bits ARM Cortex-M0+)** by Arduino `1.8.14` | Yes      |
+| Arduino Nano ESP32          | **Arduino ESP32 Boards** by Arduino `2.0.13`                         | Yes      |
+| Arduino Nano ESP32          | **esp32** by Espressif Systems `3.0.5`                               | Yes      |
+| Arduino Nano Every          | **Arduino megaAVR Boards** by Arduino `1.8.8`                        | Yes      |
+| Arduino Nano Matter         | **Silicon Labs** by Silicon Labs `2.1.0`                             | No [^2]  |
+| Arduino Nano RP2040 Connect | **Arduino Mbed OS Nano Boards** by Arduino `4.1.5`                   | No [^3]  |
+| Arduino Nano RP2040 Connect | **Raspberry Pi Pico/RP2040** by Earle F. Philhower, III `4.1.1`      | Yes      |
+| Arduino UNO R3 SMD          | **Arduino AVR Boards** by Arduino `1.8.6`                            | Yes      |
+| Arduino UNO R4 Minima       | **Arduino UNO R4 Boards** by Arduino `1.2.2`                         | Yes      |
+
+[^1]: **Arduino Make Your UNO**
+The example program does not work with this board when connected to a computer via USB.
+However, it does work when it is powered through the barrel jack.
+
+[^2]: **Arduino Nano RP2040 Connect**  
+This board has trouble receiving Modbus messages when using the `Arduino Mbed OS Nano Boards` core by Arduino.  
+It seems that there is some sort of timing issue.  
+It can technically be made to work if you tell the library that it is operating at a lower baud rate than the serial port assigned to the library is actually operating at.
+However, this would cause the library to operate with unknown timing tolerances, possibly well outside the Modbus specification.
+
+[^3]: **Arduino Nano Matter**  
+As of this writing (2024-09-07), `flush()` is not properly implemented with Serial on this board.  
+ModbusRTUMaster depends on `flush()` to know when to set the DE and RE pins LOW after a message is sent.
 
 
 ## Example

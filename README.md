@@ -1,10 +1,5 @@
 # ModbusRTUSlave
 
-> [!WARNING]  
-> ModbusRTUSlave is currently undergoing a redesign.
-> Things may not work, or may not be corretly documented.
-> For a functional version of this library, please use the latest tagged release.
-
 Modbus is an industrial communication protocol. The RTU variant communicates over serial lines such as UART, RS-232, or RS-485. The full details of the Modbus protocol can be found at [modbus.org](https://modbus.org). A good summary can also be found on [Wikipedia](https://en.wikipedia.org/wiki/Modbus).
 
 This is an Arduino library that implements the slave/server logic of the Modbus RTU protocol. It enables an Arduino, or arduino compatible, board to respond to Modbus RTU requests from a Modbus master/client. This library implements function codes 1 (Read Coils), 2 (Read Discrete Inputs), 3 (Read Holding Registers), 4 (Read Input Registers), 5 (Write Single Coil), 6 (Write Single Holding Register), 15 (Write Multiple Coils), and 16 (Write Multiple Holding Registers).
@@ -48,7 +43,7 @@ This library has been tested with the following boards and cores:
 | Arduino UNO R3 SMD          | **Arduino AVR Boards** by Arduino `1.8.6`                            | Yes      |
 | Arduino UNO R4 Minima       | **Arduino UNO R4 Boards** by Arduino `1.2.2`                         | Yes      |
 
-[^1]: **Arduino Make Your UNO**
+[^1]: **Arduino Make Your UNO**  
 The example program does not work with this board when connected to a computer via USB.
 However, it does work when it is powered through the barrel jack.
 
@@ -268,3 +263,5 @@ void loop() {
 }
 
 ```
+
+*Soli Deo Gloria*

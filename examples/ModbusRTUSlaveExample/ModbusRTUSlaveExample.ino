@@ -25,6 +25,11 @@
   // On the Arduino Mega and Adruino Due, Serial1 is on pins 18 and 19.
   #define MODBUS_SERIAL Serial1
 #endif
+// You can change the baud, config, and unit id values if you like.
+// Just make sure they match the settings you use in ModbusRTUMasterExample.
+#define MODBUS_BAUD 38400
+#define MODBUS_CONFIG SERIAL_8N1
+#define MODBUS_UNIT_ID 1
 
 #if (defined(ARDUINO_NANO_RP2040_CONNECT) && !defined(ARDUINO_ARCH_MBED)) || defined(ARDUINO_NANO_ESP32)
   // These boards operate unsing GPIO numbers that don't correspond to the numbers on the boards.
@@ -73,12 +78,8 @@ void setup() {
   modbus.configureHoldingRegisters(holdingRegisters, numHoldingRegisters);
   modbus.configureInputRegisters(inputRegisters, numInputRegisters);
 
-  // You can change the baud and config values if you like.
-  // Just make sure they match the settings you use in ModbusRTUSlaveExample.
-  unsigned long baud = 38400;
-  uint32_t config = SERIAL_8N1;
-  MODBUS_SERIAL.begin(baud, config);
-  modbus.begin(1, baud, config);
+  MODBUS_SERIAL.begin(MODBUS_BAUD, MODBUS_CONFIG);
+  modbus.begin(MODBUS_UNIT_ID, MODBUS_BAUD, MODBUS_CONFIG);
 }
 
 void loop() {

@@ -56,15 +56,6 @@ This example demonstrates how to setup and use the [ModbusRTUSlave](https://gith
 - 0.1µF Capacitor
 - 4x LEDs
 
- 
-**If using an ATmega328P or ATmega168 based board (Arduino UNO R3 and earlier, Arduino Nano, Arduino Pro Mini, etc.):**
-- Connect RO to pin 10 instead of pin 0
-- Connect DI to pin 11 instead of pin 1
-
-**If using an Arduino Mega (either variant) or Arduino Due:**
-- Connect RO to pin 19 instead of pin 0
-- Connect DI to pin 18 instead of pin 1
-
 **Connect the following points together from this circuit and the one for ModbusRTUSlaveExample:**
 - RS485_D-
 - RS485_D+

@@ -3,7 +3,6 @@ configureCoils	KEYWORD2
 configureDiscreteInputs	KEYWORD2		
 configureHoldingRegisters	KEYWORD2		
 configureInputRegisters	KEYWORD2		
+setResponseDelay	KEYWORD2		
 begin	KEYWORD2		
 poll	KEYWORD2		
-NO_DE_PIN	LITERAL1		
-NO_ID	LITERAL1		

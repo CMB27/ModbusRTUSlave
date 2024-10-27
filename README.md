@@ -7,13 +7,23 @@
 
 Modbus is an industrial communication protocol. The RTU variant communicates over serial lines such as UART, RS-232, or RS-485. The full details of the Modbus protocol can be found at [modbus.org](https://modbus.org). A good summary can also be found on [Wikipedia](https://en.wikipedia.org/wiki/Modbus).
 
-This is an Arduino library that implements the slave/server logic of the Modbus RTU protocol. This library implements function codes 1 (Read Coils), 2 (Read Discrete Inputs), 3 (Read Holding Registers), 4 (Read Input Registers), 5 (Write Single Coil), 6 (Write Single Holding Register), 15 (Write Multiple Coils), and 16 (Write Multiple Holding Registers).
+This is an Arduino library that implements the slave/server logic of the Modbus RTU protocol. It enables an Arduino, or arduino compatible, board to respond to Modbus RTU requests from a Modbus master/client. This library implements function codes 1 (Read Coils), 2 (Read Discrete Inputs), 3 (Read Holding Registers), 4 (Read Input Registers), 5 (Write Single Coil), 6 (Write Single Holding Register), 15 (Write Multiple Coils), and 16 (Write Multiple Holding Registers).
 
-This library will work with HardwareSerial, SoftwareSerial, or Serial_ (USB Serial on ATmega32u4 based boards). A driver enable pin can be set, enabling an RS-485 transceiver to be used. This library requires arrays for coils, discrete inputs, holding registers, and input registers to be passed to it. 
+This library will work with any `Stream` object, like `Serial`. A driver enable pin can be set up, enabling a half-duplex RS-485 transceiver to be used. Only `SERIAL_8N1`, `SERIAL_8E1`, `SERIAL_8O1`, `SERIAL_8N2`, `SERIAL_8E2`, and `SERIAL_8O2` configurations are supported; attempting to use any other configuration will cause the library to default to timings for `SERIAL_8N1`.
 
+This library updates coil, descrete input, holding register, and input register arrays based on Modbus requests. It does not give indication of what has changed, or even if a valid Modbus reguest has been received. This is done to keep the library simple and easy to use.
 
 ## Version Note
+### 1.x.x to 2.x.x
 Version 2.x.x of this library is not backward compatible with version 1.x.x. Any sketches that were written to use a 1.x.x version of this library will not work with later versions, at least not without modification.
+
+### 2.x.x to 3.x.x
+The main change going from version 2.x.x to 3.x.x si that `begin()` for the Serial object used needs to be run before running `begin()` for the library itself, e.g.:
+```C++
+Serial1.begin(38400);
+modbus.begin(38400);
+```
+This library is also now dependent on [ModbusADU](https://github.com/CMB27/ModbusADU) and [ModbusRTUComm](https://github.com/CMB27/ModbusRTUComm).
 
 
 ## Compatibility
@@ -69,19 +79,22 @@ Optionally sets a driver enable pin. This pin will go `HIGH` when the library is
 ``` C++
 ModbusRTUSlave(serial)
 ModbusRTUSlave(serial, dePin)
+ModbusRTUSlave(serial, dePin, rePin)
 ```
 
 #### Parameters
-- `serial`: the serial port object to use for Modbus communication.
-- `dePin`: the driver enable pin. This pin is set HIGH when transmitting. If this parameter is set to `NO_DE_PIN`, this feature will be disabled. Default value is `NO_DE_PIN`. Allowed data types: `uint8_t` or `byte`.
+- `serial`: the `Stream` object to use for Modbus communication. Usually something like `Serial1`.
+- `dePin`: the driver enable pin. This pin is set HIGH when transmitting. If this parameter is set to `-1`, this feature will be disabled. The default value is `-1`. Allowed data types are `int8_t` or `char`.
+- `rePin`: works exacly the same way as `dePin`. This option is included for compatibility with RS-485 shields like the [Arduino MKR 485 Shield](https://store.arduino.cc/products/arduino-mkr-485-shield).
 
 #### Example
 ``` C++
 # include <ModbusRTUSlave.h>
 
-const uint8_t dePin = 13;
+const int8_t dePin = A6;
+const int8_t rePin = A5;
 
-ModbusRTUSlave modbus(Serial, dePin);
+ModbusRTUSlave modbus(Serial, dePin, rePin);
 ```
 
 ---
@@ -123,7 +136,6 @@ modbus.configureDiscreteInputs(discreteInputs, numDiscreteInputs)
 ---
 
 
-
 ### configureHoldingRegisters()
 
 #### Description
@@ -160,6 +172,24 @@ modbus.configureInputRegisters(inputRegisters, numInputRegisters)
 ---
 
 
+### setResponseDelay()
+
+#### Description
+Sets an optional response delay (in ms) for the slave (default 0).
+If set to a non-zero value, the slave will wait for the specified number of milliseconds before sending the response.
+This may be useful if tight control over the dePin from the master is not possible. Adding a delay will allow the master enough time to stop transmitting and avoid issues with multiple drivers on the the physical pins.
+
+#### Syntax
+```C++
+modbus.setResponseDelay(responseDelay)
+```
+
+#### Parameters
+- `responseDelay`: number of milliseconds to wait before responding to requests. Allowed data types: `unsigned long`.
+
+---
+
+
 ### begin()
 
 #### Description
@@ -174,7 +204,7 @@ modbus.begin(slaveId, baud, config)
 
 #### Parameters
 - `slaveId`: the number used to itentify this device on the Modbus network. Allowed data types: `uint8_t` or `byte`.
-- `baud`: the baud rate to use for Modbus communication. Common values are: `1200`, `2400`, `4800`, `9600`, `16200`, `38400`, `57600`, and `115200`. Allowed data types: `uint32_t`.
+- `baud`: the baud rate to use for Modbus communication. Common values are: `1200`, `2400`, `4800`, `9600`, `16200`, `38400`, `57600`, and `115200`. Allowed data types: `unsigned long`.
 - `config`: the serial port configuration to use. Valid values are:  
 `SERIAL_8N1`: no parity (default)  
 `SERIAL_8N2`  
@@ -183,32 +213,17 @@ modbus.begin(slaveId, baud, config)
 `SERIAL_8O1`: odd parity  
 `SERIAL_8O2`
 
-_If using a SoftwareSerial port a configuration of `SERIAL_8N1` will be used regardless of what is entered._
-
 ---
 
-
-### setResponseDelay()
-Sets an optional response delay (in ms) for the slave (default 0).
-If set to a non-zero value, the slave will wait for the specified number of milliseconds before sending the response.
-This may be useful if tight control over the dePin from the master is not possible. Adding a delay will allow the master enough time to stop transmitting and avoid issues with multiple drivers on the the physical pins.
-
-
-#### Syntax
-```C++
-modbus.setResponseDelay(responseDelay)
-```
-
-#### Parameters
-- `responseDelay`: `unsigned long` number of milliseconds to wait before responding to requests.
-
----
 
 ### poll()
 
 #### Description
-Checks if any Modbus requests are available. If a valid request has been received, an appropriate response will be sent.
-This function must be called frequently.
+Checks if any Modbus requests are available.
+If a valid write request has been received, it will update the appropriate data array, and send an acknowledgment response.
+If a valid read request has been received, it will send a response with the requested data.
+If an invalid request has been received, it will either respond with an exception response or not at all, as per the Modbus specification. 
+This function should be called frequently.
 
 #### Syntax
 ``` C++
@@ -238,6 +253,7 @@ void setup() {
 
   modbus.configureCoils(coils, 2);
   modbus.configureDiscreteInputs(discreteInputs, 2);
+  Serial.begin(38400);
   modbus.begin(1, 38400);
 }
 

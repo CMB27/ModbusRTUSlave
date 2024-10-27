@@ -137,7 +137,7 @@ void ModbusRTUSlave::_processWriteMultipleHoldingRegisters(ModbusADU& adu) {
 
 
 void ModbusRTUSlave::_processReadValues(ModbusADU& adu, bool buf[], uint16_t bufSize) {
-  if (adu.getUnitId == 0) return;
+  if (adu.getUnitId() == 0) return;
   uint16_t startAddress = adu.getDataRegister(0);
   uint16_t quantity = adu.getDataRegister(2);
   if (!buf || bufSize == 0) adu.prepareExceptionResponse(1);
@@ -157,7 +157,7 @@ void ModbusRTUSlave::_processReadValues(ModbusADU& adu, bool buf[], uint16_t buf
 }
 
 void ModbusRTUSlave::_processReadValues(ModbusADU& adu, uint16_t buf[], uint16_t bufSize) {
-  if (adu.getUnitId == 0) return;
+  if (adu.getUnitId() == 0) return;
   uint16_t startAddress = adu.getDataRegister(0);
   uint16_t quantity = adu.getDataRegister(2);
   if (!buf || bufSize == 0) adu.prepareExceptionResponse(1);

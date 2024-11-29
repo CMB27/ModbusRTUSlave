@@ -2,7 +2,16 @@
 
 Modbus is an industrial communication protocol. The RTU variant communicates over serial lines such as UART, RS-232, or RS-485. The full details of the Modbus protocol can be found at [modbus.org](https://modbus.org). A good summary can also be found on [Wikipedia](https://en.wikipedia.org/wiki/Modbus).
 
-This is an Arduino library that implements the slave/server logic of the Modbus RTU protocol. It enables an Arduino, or arduino compatible, board to respond to Modbus RTU requests from a Modbus master/client. This library implements function codes 1 (Read Coils), 2 (Read Discrete Inputs), 3 (Read Holding Registers), 4 (Read Input Registers), 5 (Write Single Coil), 6 (Write Single Holding Register), 15 (Write Multiple Coils), and 16 (Write Multiple Holding Registers).
+This is an Arduino library that implements the slave/server logic of the Modbus RTU protocol. It enables an Arduino, or arduino compatible, board to respond to Modbus RTU requests from a Modbus master/client.  
+This library is able to service the following function codes:  
+- 1 (Read Coils)
+- 2 (Read Discrete Inputs)
+- 3 (Read Holding Registers)
+- 4 (Read Input Registers)
+- 5 (Write Single Coil)
+- 6 (Write Single Holding Register)
+- 15 (Write Multiple Coils)
+- 16 (Write Multiple Holding Registers).
 
 This library will work with any `Stream` object, like `Serial`. A driver enable pin can be set up, enabling a half-duplex RS-485 transceiver to be used. Only `SERIAL_8N1`, `SERIAL_8E1`, `SERIAL_8O1`, `SERIAL_8N2`, `SERIAL_8E2`, and `SERIAL_8O2` configurations are supported; attempting to use any other configuration will cause the library to default to timings for `SERIAL_8N1`.
 

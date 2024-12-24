@@ -256,6 +256,16 @@ This function should be called frequently.
 ### Parameters
 - `modbus`: a `ModbusRTUSlave` object.
 
+### Returns
+Error/status code. Data type: `ModbusRTUSlaveError` or `uint8_t`.
+- `0`: Success
+- `1`: No request available
+- `2`: Frame error
+- `3`: CRC error
+- `4`: Unknown communication error
+- `5`: ID in request does not match slave/server ID and request is not a broadcast request
+- `6`: Exception response
+
 ### Example
 ``` C++
 # include <ModbusRTUSlave.h>
@@ -295,3 +305,112 @@ void loop() {
   </blockquote>
 </details>
 
+
+
+<details><summary id="getFunctionCode"><strong>getFunctionCode()</strong></summary>
+  <blockquote>
+
+### Description
+Gets the last function code received.
+
+This can be run after successfully running `poll()` to get the function code that was processed.
+
+### Syntax
+`modbus.getFunctionCode()`
+
+### Parameters
+- `modbus`: a `ModbusRTUSlave` object.
+
+### Returns
+Function code. Data type: `uint8_t`.
+- `1`: Read coils
+- `2`: Read discrete inputs
+- `3`: Read holding registers
+- `4`: Read input registers
+- `5`: Write single coil
+- `6`: Write single register
+- `15`: Write multiple coils
+- `16`: Write multiple registers
+
+*Details on function codes can be found in the [Modbus Application Protocol Specification](https://modbus.org/docs/Modbus_Application_Protocol_V1_1b3.pdf). More function codes exist than are listed here, but these are the most common, and the ones implemented by this library.*
+
+  </blockquote>
+</details>
+
+
+
+<details><summary id="getDataAddress"><strong>getDataAddress()</strong></summary>
+  <blockquote>
+
+### Description
+Gets the data address used in the last request successfully processed.
+
+This can be run after running `poll()`.  
+`getFunctionCode()` can be used to determine what datatype (coils, discret inputs, holding registers, input registers) were read or written to.
+
+### Syntax
+`modbus.getDataAddress()`
+
+### Parameters
+- `modbus`: a `ModbusRTUSlave` object.
+
+### Returns
+Data address. Data type: `uint16_t`.
+
+  </blockquote>
+</details>
+
+
+
+<details><summary id="getDataQuantity"><strong>getDataQuantity()</strong></summary>
+  <blockquote>
+
+### Description
+Gets the quantity of data read or written to from the last request successfully processed.
+
+This can be run after running `poll()`.  
+`getFunctionCode()` can be used to determine what datatype (coils, discret inputs, holding registers, input registers) were read or written to.  
+`getDataAddress()` can be used to determine what the starting address was.
+
+### Syntax
+`modbus.getDataQuantity()`
+
+### Parameters
+- `modbus`: a `ModbusRTUSlave` object.
+
+### Returns
+Data address. Data type: `uint16_t`.
+
+  </blockquote>
+</details>
+
+
+
+<details><summary id="getexceptionresponse"><strong>getExceptionResponse()</strong></summary>
+  <blockquote>
+
+### Description
+Gets the last exception response that has occured.
+
+When a valid Modbus request is received, and the slave/server device cannot process it, it responds with an exception code.
+This response is called an exception resonse, and it can be helpful in diagnosing issues.
+
+### Syntax
+`modbus.getExceptionResponse()`
+
+### Parameters
+- `modbus`: a `ModbusRTUSlave` object.
+
+### Returns
+Exception code. Data type: `uint8_t`.
+
+- `0`: None
+- `1`: Illegal function
+- `2`: Illegal data address
+- `3`: Illegal data value
+- `4`: Server device failure
+
+_Details on exeption responses can be found in the [Modbus Application Protocol Specification](https://modbus.org/docs/Modbus_Application_Protocol_V1_1b3.pdf). More exeption responses exist than are listed here, but these are the most common._
+
+  </blockquote>
+</details>

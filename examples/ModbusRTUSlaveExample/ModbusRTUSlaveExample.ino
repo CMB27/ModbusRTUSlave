@@ -6,7 +6,7 @@
   
   Created: 2023-07-22
   By: C. M. Bulliner
-  Last Modified: 2024-10-26
+  Last Modified: 2024-12-24
   By: C. M. Bulliner
   
 */
@@ -17,6 +17,7 @@
   // The ATmega328P and ATmega168 are used in the Ardunino UNO and similar boards.
   // The ATmega2560 and ATmega1280 are used in the Arduino Mega and similar.
   #define MODBUS_SERIAL Serial
+  #define DEBUGGING_DISABLED
 #elif defined(ARDUINO_NANO_ESP32)
   // On the Arduino Nano ESP32, the HardwareSerial port on pins 0 and 1 is Serial0.
   #define MODBUS_SERIAL Serial0
@@ -57,6 +58,9 @@ bool discreteInputs[numDiscreteInputs];
 uint16_t holdingRegisters[numHoldingRegisters];
 uint16_t inputRegisters[numInputRegisters];
 
+unsigned long transactionCounter = 0;
+unsigned long errorCounter = 0;
+
 
 
 void setup() {
@@ -87,11 +91,63 @@ void loop() {
   inputRegisters[1] = map(analogRead(knobPins[1]), 0, 1023, 0, 255);
   discreteInputs[0] = !digitalRead(buttonPins[0]);
   discreteInputs[1] = !digitalRead(buttonPins[1]);
-  
-  modbus.poll();
+
+  #ifdef DEBUGGING_DISABLED
+    modbus.poll();
+  #else
+    uint8_t error = modbus.poll();
+    uint8_t functionCode = modbus.getFunctionCode();
+    uint16_t address = modbus.getDataAddress();
+    uint16_t quantity = modbus.getDataQuantity();
+    uint8_t exceptionResponse = modbus.getExceptionResponse();
+    bool broadcastFlag = modbus.getBroadcastFlag();
+    printLog(error, functionCode, address, quantity, exceptionResponse, broadcastFlag);
+  #endif
 
   analogWrite(ledPins[0], holdingRegisters[0]);
   analogWrite(ledPins[1], holdingRegisters[1]);
   digitalWrite(ledPins[2], coils[0]);
   digitalWrite(ledPins[3], coils[1]);
 }
+
+
+#ifndef DEBUGGING_DISABLED
+  void printLog(uint8_t error, uint8_t functionCode, uint16_t address, uint16_t quantity, uint8_t exceptionResponse, bool broadcastFlag) {
+    if (
+      error == MODBUS_RTU_SLAVE_SUCCESS ||
+      error == MODBUS_RTU_SLAVE_FRAME_ERROR ||
+      error == MODBUS_RTU_SLAVE_CRC_ERROR ||
+      error == MODBUS_RTU_SLAVE_UNKNOWN_COMM_ERROR ||
+      error == MODBUS_RTU_SLAVE_EXCEPTION_RESPONSE
+      ) transactionCounter++;
+    if (
+      error == MODBUS_RTU_SLAVE_FRAME_ERROR ||
+      error == MODBUS_RTU_SLAVE_CRC_ERROR ||
+      error == MODBUS_RTU_SLAVE_UNKNOWN_COMM_ERROR ||
+      error == MODBUS_RTU_SLAVE_EXCEPTION_RESPONSE
+      ) errorCounter++;
+    char broadcastChar = ' ';
+    if (broadcastFlag) broadcastChar = 'B';
+    char string[128];
+    sprintf(string, "%ld %ld %c %02X %04X %04X ", transactionCounter, errorCounter, broadcastChar, functionCode, address, quantity);
+    Serial.print(string);
+    switch (error) {
+      case MODBUS_RTU_SLAVE_FRAME_ERROR:
+        Serial.print("frame error");
+        break;
+      case MODBUS_RTU_SLAVE_CRC_ERROR:
+        Serial.print("crc error");
+        break;
+      case MODBUS_RTU_SLAVE_UNKNOWN_COMM_ERROR:
+        Serial.print("unknown comm error");
+        break;
+      case MODBUS_RTU_SLAVE_EXCEPTION_RESPONSE:
+        sprintf(string, "exception response: %02X", exceptionResponse);
+        Serial.print(string);
+        break;
+      default:
+        break;
+    }
+    Serial.println();
+  }
+#endif

@@ -14,7 +14,6 @@ void ModbusRTUSlave::begin(uint8_t unitId, unsigned long baud, uint32_t config) 
 }
 
 ModbusRTUSlaveError ModbusRTUSlave::poll() {
-  clearDebugValues();
   _broadcastFlag = false;
   ModbusADU adu;
   ModbusRTUCommError error = _rtuComm.readAdu(adu);

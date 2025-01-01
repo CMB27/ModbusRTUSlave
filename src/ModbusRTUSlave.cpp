@@ -8,44 +8,21 @@ void ModbusRTUSlave::setResponseDelay(unsigned long responseDelay) {
   _responseDelay = responseDelay;
 }
 
-void ModbusRTUSlave::begin(uint8_t unitId, unsigned long baud, uint32_t config) {
-  if (unitId >= 1 && unitId <= 247) _unitId = unitId;
+void ModbusRTUSlave::begin(uint8_t localUnitId, unsigned long baud, uint32_t config) {
+  if (localUnitId >= 1 && localUnitId <= 247) _localUnitId = localUnitId;
   _rtuComm.begin(baud, config);
 }
 
-ModbusRTUSlaveError ModbusRTUSlave::poll() {
-  _broadcastFlag = false;
+bool ModbusRTUSlave::poll() {
   ModbusADU adu;
   ModbusRTUCommError error = _rtuComm.readAdu(adu);
-  if (error) return _translateCommError(error);
-  if (adu.getUnitId() != _unitId && adu.getUnitId() != 0) return MODBUS_RTU_SLAVE_ID_DOES_NOT_MATCH;
+  if (error) return false;
+  uint8_t unitId = adu.getUnitId();
+  if (unitId != _localUnitId && unitId != 0) return false;
   processPdu(adu);
-  if (adu.getUnitId() == 0) _broadcastFlag = true;
-  else {
+  if (unitId != 0) {
     delay(_responseDelay);
     _rtuComm.writeAdu(adu);
   }
-  if (getExceptionResponse()) return MODBUS_RTU_SLAVE_EXCEPTION_RESPONSE;
-  return MODBUS_RTU_SLAVE_SUCCESS;
-}
-
-bool ModbusRTUSlave::getBroadcastFlag() {
-  return _broadcastFlag;
-}
-
-
-
-ModbusRTUSlaveError ModbusRTUSlave::_translateCommError(ModbusRTUCommError commError) {
-  switch (commError) {
-    case MODBUS_RTU_COMM_SUCCESS:
-      return MODBUS_RTU_SLAVE_SUCCESS;
-    case MODBUS_RTU_COMM_TIMEOUT:
-      return MODBUS_RTU_SLAVE_NO_REQUEST_AVAILABLE;
-    case MODBUS_RTU_COMM_FRAME_ERROR:
-      return MODBUS_RTU_SLAVE_FRAME_ERROR;
-    case MODBUS_RTU_COMM_CRC_ERROR:
-      return MODBUS_RTU_SLAVE_CRC_ERROR;
-    default:
-      return MODBUS_RTU_SLAVE_UNKNOWN_COMM_ERROR;
-  }
+  return true;
 }

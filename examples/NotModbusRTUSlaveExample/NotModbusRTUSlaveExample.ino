@@ -1,17 +1,23 @@
 /*
-  ModbusRTUSlaveExample
+  NotModbusRTUSlaveExample
 
-  This example demonstrates how to setup and use the ModbusRTUSlave library (https://github.com/CMB27/ModbusRTUSlave).
-  See README.md (https://github.com/CMB27/ModbusRTUMaster/blob/main/examples/ModbusRTUSlaveExample/README.md) for hardware setup details.
+  This example should do the same thing as ModbusRTUSlaveExample, but without actually using the ModbusRTUSlave library.
+  This adds some complexity, but it exposes more of the process and more information that can be used for debugging or advanced applications.
+
+  See ModbusRTUSlaveExample README (https://github.com/CMB27/ModbusRTUMaster/blob/main/examples/ModbusRTUSlaveExample/README.md) for hardware setup details.
   
-  Created: 2023-07-22
-  By: C. M. Bulliner
-  Last Modified: 2024-12-30
+  See https://github.com/CMB27/ModbusADU for details on ModbusADU.
+  See https://github.com/CMB27/ModbusSlaveLogic for details on ModbusSlaveLogic.
+  See https://github.com/CMB27/ModbusRTUComm for details on ModbusRTUComm.
+  
+  Created: 2024-12-30
   By: C. M. Bulliner
   
 */
 
-#include <ModbusRTUSlave.h>
+#include <ModbusADU.h>
+#include <ModbusSlaveLogic.h>
+#include <ModbusRTUComm.h>
 
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__) || defined(__AVR_ATmega2560__) || defined(__AVR_ATmega1280__) || defined(ARDUINO_SAM_DUE)
   // The ATmega328P and ATmega168 are used in the Ardunino UNO and similar boards.
@@ -45,7 +51,8 @@
 #endif
 const int8_t knobPins[2] = {A0, A1};
 
-ModbusRTUSlave modbus(MODBUS_SERIAL, dePin);
+ModbusRTUComm rtuComm(MODBUS_SERIAL, dePin);
+ModbusSlaveLogic modbusLogic;
 
 const uint8_t numCoils = 2;
 const uint8_t numDiscreteInputs = 2;
@@ -72,17 +79,17 @@ void setup() {
   pinMode(ledPins[2], OUTPUT);
   pinMode(ledPins[3], OUTPUT);
 
-  #if defined(ARDUINO_NANO_ESP32) || defined(ARDUINO_NANO_MATTER)
+  #if defined(ARDUINO_NANO_ESP32)
     analogReadResolution(10);
   #endif
 
-  modbus.configureCoils(coils, numCoils);
-  modbus.configureDiscreteInputs(discreteInputs, numDiscreteInputs);
-  modbus.configureHoldingRegisters(holdingRegisters, numHoldingRegisters);
-  modbus.configureInputRegisters(inputRegisters, numInputRegisters);
+  modbusLogic.configureCoils(coils, numCoils);
+  modbusLogic.configureDiscreteInputs(discreteInputs, numDiscreteInputs);
+  modbusLogic.configureHoldingRegisters(holdingRegisters, numHoldingRegisters);
+  modbusLogic.configureInputRegisters(inputRegisters, numInputRegisters);
 
   MODBUS_SERIAL.begin(MODBUS_BAUD, MODBUS_CONFIG);
-  modbus.begin(MODBUS_UNIT_ID, MODBUS_BAUD, MODBUS_CONFIG);
+  rtuComm.begin(MODBUS_BAUD, MODBUS_CONFIG);
 }
 
 void loop() {
@@ -91,7 +98,13 @@ void loop() {
   discreteInputs[0] = !digitalRead(buttonPins[0]);
   discreteInputs[1] = !digitalRead(buttonPins[1]);
 
-  modbus.poll();
+  ModbusADU adu;                                        // creates a ModbusADU object to hold the modbus data frame
+  uint8_t error = rtuComm.readAdu(adu);                 // reads any available data and checks for errors
+  if (error) return;                                    // skips the rest of loop if there are any errors
+  uint8_t unitId = adu.getUnitId();                     // gets the unit id from the modbus data frame
+  if (unitId != MODBUS_UNIT_ID && unitId != 0) return;  // skips the rest of loop if the data frame is not addressed to us and is not a broadcast message
+  modbusLogic.processPdu(adu);                          // processes the data frame, possibly updating the modbus data arrays and formulating the response
+  if (unitId != 0) rtuComm.writeAdu(adu);               // send the response if the request was not a broadcast message
 
   analogWrite(ledPins[0], holdingRegisters[0]);
   analogWrite(ledPins[1], holdingRegisters[1]);

@@ -6,7 +6,7 @@
   
   Created: 2023-07-22
   By: C. M. Bulliner
-  Last Modified: 2024-12-30
+  Last Modified: 2024-12-31
   By: C. M. Bulliner
   
 */
@@ -56,9 +56,6 @@ bool coils[numCoils];
 bool discreteInputs[numDiscreteInputs];
 uint16_t holdingRegisters[numHoldingRegisters];
 uint16_t inputRegisters[numInputRegisters];
-
-unsigned long transactionCounter = 0;
-unsigned long errorCounter = 0;
 
 
 
